@@ -14,11 +14,12 @@
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "format": "prettier --write .",
-    "db:up": "docker compose up -d",
+    "db:up": "docker compose up -d --wait",
     "db:down": "docker compose down",
     "db:generate": "pnpm --filter @aeroshop/api db:generate",
     "db:migrate": "pnpm --filter @aeroshop/api db:migrate",
-    "db:studio": "pnpm --filter @aeroshop/api db:studio"
+    "db:studio": "pnpm --filter @aeroshop/api db:studio",
+    "db:seed": "pnpm --filter @aeroshop/api db:seed"
   },
   "devDependencies": {
     "prettier": "^3.9.9",
