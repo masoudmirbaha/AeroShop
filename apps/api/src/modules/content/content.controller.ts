@@ -1,6 +1,5 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { Public } from '../../common/public.decorator.js';
-import { Roles } from '../../common/roles.decorator.js';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { contactSchema } from './content.schemas.js';
@@ -39,18 +38,5 @@ export class ContentController {
   contact(@Body(new ZodValidationPipe(contactSchema)) body: unknown) {
     const input = contactSchema.parse(body);
     return this.prisma.contactMessage.create({ data: input }).then(() => ({ ok: true }));
-  }
-
-  @Roles('ADMIN')
-  @Get('admin/summary')
-  async summary() {
-    const [products, orders, users, requests, messages] = await Promise.all([
-      this.prisma.product.count(),
-      this.prisma.order.count(),
-      this.prisma.user.count(),
-      this.prisma.serviceRequest.count(),
-      this.prisma.contactMessage.count(),
-    ]);
-    return { products, orders, users, requests, messages };
   }
 }

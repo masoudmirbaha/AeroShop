@@ -1,3 +1,6 @@
+import { PackageSearch } from "lucide-react";
+import Link from "next/link";
+import { EmptyState, Page } from "@/components/page";
 import { ProductCardView } from "@/components/product-card";
 import { api, type ProductList } from "@/lib/api";
 
@@ -14,14 +17,31 @@ export default async function ProductsPage({
   const data = await api<ProductList>(`/products?${params.toString()}`);
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">محصولات</h1>
-      <p className="mb-6 text-sm text-muted-foreground">{data.total} مورد</p>
-      <div className="grid gap-4 md:grid-cols-3">
-        {data.items.map((product) => (
-          <ProductCardView key={product.id} product={product} />
-        ))}
-      </div>
-    </main>
+    <Page
+      eyebrow="فروشگاه آموزشی"
+      title={query.q ? `نتایج جستجو برای «${query.q}»` : "محصولات"}
+      description="آموزش‌های تک‌موضوعی، بسته‌ها و دوره‌های شبیه‌سازی جریان با فایل و ویدئو؛ همه دیجیتال و قابل دانلود از حساب کاربری."
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "محصولات" }]}
+      actions={<span className="badge badge-muted h-8 px-3 text-xs">{data.total.toLocaleString("fa-IR")} مورد</span>}
+    >
+      {data.items.length ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {data.items.map((product) => (
+            <ProductCardView key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState
+          icon={PackageSearch}
+          title="محصولی پیدا نشد"
+          description="عبارت دیگری را جستجو کنید یا همه محصولات را ببینید."
+          action={
+            <Link href="/products" className="btn btn-outline">
+              همه محصولات
+            </Link>
+          }
+        />
+      )}
+    </Page>
   );
 }

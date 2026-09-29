@@ -2,10 +2,12 @@
 
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Card, Page } from "@/components/page";
 
 export function ServiceRequestForm({ serviceSlug, title }: { serviceSlug: string; title: string }) {
   const router = useRouter();
   const [message, setMessage] = useState("");
+  const [ok, setOk] = useState(false);
 
   async function submit(formData: FormData) {
     const response = await fetch("/api/v1/service-requests", {
@@ -22,18 +24,40 @@ export function ServiceRequestForm({ serviceSlug, title }: { serviceSlug: string
       router.push("/login");
       return;
     }
+    setOk(response.ok);
     setMessage(response.ok ? "درخواست ثبت شد و وضعیت آن NEW است." : "ثبت درخواست انجام نشد.");
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 py-10">
-      <h1 className="mb-6 text-3xl font-bold">{title}</h1>
-      <form action={submit} className="flex flex-col gap-3">
-        <input name="subject" required minLength={3} placeholder="موضوع" className="rounded-md border px-3 py-2" />
-        <textarea name="message" required minLength={10} placeholder="شرح درخواست" className="min-h-32 rounded-md border px-3 py-2" />
-        <button type="submit" className="rounded-md bg-primary px-4 py-2 text-primary-foreground">ارسال</button>
-      </form>
-      {message ? <p className="mt-4 text-sm">{message}</p> : null}
-    </main>
+    <Page
+      width="form"
+      eyebrow="خدمات مهندسی"
+      title={title}
+      description="مسئله را کوتاه و دقیق شرح دهید: هندسه، رژیم جریان، نرم‌افزار و خروجی مورد انتظار. وضعیت درخواست در حساب کاربری قابل پیگیری است."
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "خدمات", href: "/services" }, { label: title }]}
+    >
+      <Card className="p-6 md:p-8">
+        <form action={submit} className="grid gap-4">
+          <label>
+            <span className="field-label">موضوع</span>
+            <input name="subject" required minLength={3} placeholder="موضوع" className="field" />
+          </label>
+          <label>
+            <span className="field-label">شرح درخواست</span>
+            <textarea name="message" required minLength={10} placeholder="شرح درخواست" className="field min-h-40 leading-7" />
+          </label>
+          <div className="flex flex-wrap items-center gap-3">
+            <button type="submit" className="btn btn-primary">
+              ارسال درخواست
+            </button>
+            {message ? (
+              <p role="status" className={`text-sm ${ok ? "text-accent-foreground" : "text-destructive"}`}>
+                {message}
+              </p>
+            ) : null}
+          </div>
+        </form>
+      </Card>
+    </Page>
   );
 }

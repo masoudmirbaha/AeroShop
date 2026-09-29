@@ -1,3 +1,5 @@
+import { PackageSearch } from "lucide-react";
+import { EmptyState, Page } from "@/components/page";
 import { ProductCardView } from "@/components/product-card";
 import { api, type ProductCard } from "@/lib/api";
 
@@ -11,14 +13,21 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const category = await api<CategoryPageData>(`/categories/${slug}`);
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <h1 className="text-3xl font-bold">{category.name}</h1>
-      <p className="mt-2 text-muted-foreground">{category.description}</p>
-      <div className="mt-6 grid gap-4 md:grid-cols-3">
-        {category.products.map((product) => (
-          <ProductCardView key={product.id} product={product} />
-        ))}
-      </div>
-    </main>
+    <Page
+      eyebrow="دسته‌بندی"
+      title={category.name}
+      description={category.description}
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "محصولات", href: "/products" }, { label: category.name }]}
+    >
+      {category.products.length ? (
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {category.products.map((product) => (
+            <ProductCardView key={product.id} product={product} />
+          ))}
+        </div>
+      ) : (
+        <EmptyState icon={PackageSearch} title="این دسته هنوز محصولی ندارد" />
+      )}
+    </Page>
   );
 }

@@ -1,10 +1,14 @@
 "use client";
 
+import { CreditCard, FlaskConical, XCircle } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { Card, Page } from "@/components/page";
+import { useSession } from "@/components/session-provider";
 
 export default function CheckoutPage() {
   const router = useRouter();
+  const { refreshCart } = useSession();
   const [message, setMessage] = useState("");
 
   async function pay(result: "SUCCESS" | "FAILED") {
@@ -23,22 +27,38 @@ export default function CheckoutPage() {
       return;
     }
     const order = await response.json();
+    await refreshCart();
     router.push(`/checkout/result?status=${order.status}&id=${order.id}`);
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 py-10">
-      <h1 className="text-3xl font-bold">تسویه</h1>
-      <p className="mt-3 text-muted-foreground">پرداخت آزمایشی است. درگاه بانکی وصل نیست.</p>
-      <div className="mt-6 flex gap-3">
-        <button type="button" onClick={() => pay("SUCCESS")} className="rounded-md bg-primary px-4 py-2 text-primary-foreground">
-          پرداخت موفق
-        </button>
-        <button type="button" onClick={() => pay("FAILED")} className="rounded-md border px-4 py-2">
-          پرداخت ناموفق
-        </button>
-      </div>
-      {message ? <p className="mt-4 text-sm">{message}</p> : null}
-    </main>
+    <Page
+      width="form"
+      title="تسویه حساب"
+      description="پرداخت را تکمیل کنید تا فایل‌ها در حساب شما فعال شوند."
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "سبد خرید", href: "/cart" }, { label: "تسویه" }]}
+    >
+      <Card className="p-6 md:p-8">
+        <div className="flex items-start gap-3 rounded-xl bg-accent/70 p-4 text-sm leading-6 text-accent-foreground">
+          <FlaskConical className="mt-0.5 size-5 shrink-0" aria-hidden="true" />
+          پرداخت آزمایشی است. درگاه بانکی وصل نیست.
+        </div>
+        <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <button type="button" onClick={() => pay("SUCCESS")} className="btn btn-primary btn-lg">
+            <CreditCard aria-hidden="true" />
+            پرداخت موفق
+          </button>
+          <button type="button" onClick={() => pay("FAILED")} className="btn btn-outline btn-lg">
+            <XCircle aria-hidden="true" />
+            پرداخت ناموفق
+          </button>
+        </div>
+        {message ? (
+          <p role="alert" className="mt-4 rounded-lg bg-destructive/10 px-3 py-2 text-sm text-destructive">
+            {message}
+          </p>
+        ) : null}
+      </Card>
+    </Page>
   );
 }

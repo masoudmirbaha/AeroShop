@@ -1,7 +1,10 @@
 import type { Metadata } from "next";
 import { Geist_Mono, Vazirmatn } from "next/font/google";
 import { APP_NAME } from "@aeroshop/shared";
-import { SiteFooter, SiteHeader } from "@/components/site-shell";
+import { DirectionProvider } from "@base-ui/react/direction-provider";
+import { SessionProvider } from "@/components/session-provider";
+import { SiteHeader } from "@/components/site-header";
+import { SiteFooter } from "@/components/site-shell";
 import "./globals.css";
 
 const vazirmatn = Vazirmatn({
@@ -30,9 +33,13 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${vazirmatn.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <SiteHeader />
-        {children}
-        <SiteFooter />
+        <DirectionProvider direction="rtl">
+          <SessionProvider>
+            <SiteHeader />
+            {children}
+            <SiteFooter />
+          </SessionProvider>
+        </DirectionProvider>
       </body>
     </html>
   );

@@ -2,6 +2,7 @@ import { Module } from '@nestjs/common';
 import { APP_GUARD } from '@nestjs/core';
 import { ConfigModule } from '@nestjs/config';
 import { validateEnv } from './config/env.js';
+import { AdminModule } from './modules/admin/admin.module.js';
 import { JwtAuthGuard } from './common/jwt-auth.guard.js';
 import { RolesGuard } from './common/roles.guard.js';
 import { AuthModule } from './modules/auth/auth.module.js';
@@ -32,6 +33,7 @@ import { PrismaModule } from './prisma/prisma.module.js';
     OrdersModule,
     DownloadsModule,
     ServicesModule,
+    AdminModule,
   ],
   providers: [
     { provide: APP_GUARD, useClass: JwtAuthGuard },
