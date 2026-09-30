@@ -1,4 +1,5 @@
 import { ArrowLeft, GraduationCap, PackageSearch } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { EmptyState, Page } from "@/components/page";
@@ -12,6 +13,11 @@ const kinds = [
   { type: "BUNDLE", label: "بسته‌های آموزشی" },
   { type: "FREE", label: "رایگان" },
 ] as const;
+
+export const metadata: Metadata = {
+  title: "محصولات",
+  description: "محصولات آموزشی دیجیتال شبیه‌سازی CFD: آموزش‌های تک‌موضوعی، بسته‌های آموزشی و محصولات رایگان.",
+};
 
 export default async function ProductsPage({
   searchParams,
@@ -85,7 +91,7 @@ export default async function ProductsPage({
         </div>
       )}
       {items.length ? (
-        <ProductGrid items={items} />
+        <ProductGrid items={items} label="فهرست محصولات" />
       ) : (
         <EmptyState
           icon={PackageSearch}

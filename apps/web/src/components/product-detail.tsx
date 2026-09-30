@@ -1,4 +1,5 @@
 import { BadgeCheck, BookOpen, Clock, Download, FileText, FolderOpen, Gauge, Layers, ListTree, PlayCircle, ShieldCheck, type LucideIcon } from "lucide-react";
+import type { Metadata } from "next";
 import { permanentRedirect } from "next/navigation";
 import { AddToCart } from "@/components/add-to-cart";
 import { Card, Page, Section, type Crumb } from "@/components/page";
@@ -50,6 +51,11 @@ function facts(product: Detail): { icon: LucideIcon; label: string; value: strin
     ...(product.files.length ? [{ icon: Download, label: "فایل‌ها", value: count(product.files.length, "فایل") }] : []),
     ...(product.level ? [{ icon: Gauge, label: "سطح", value: typeLabel(product.level) }] : []),
   ];
+}
+
+export async function productMetadata(slug: string): Promise<Metadata> {
+  const product = await api<Detail>(`/products/${slug}`);
+  return { title: product.title, description: product.summary };
 }
 
 export async function ProductDetail({ slug, section }: { slug: string; section: "products" | "courses" }) {

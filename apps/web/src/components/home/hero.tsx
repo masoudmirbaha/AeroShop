@@ -29,34 +29,33 @@ export function HomeHero() {
     <section className="relative isolate overflow-hidden bg-navy text-navy-foreground">
       <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-bl from-navy via-navy to-primary/35" />
       <div aria-hidden="true" className={`absolute inset-0 -z-10 ${gridLines} [background-size:40px_40px] mask-[radial-gradient(ellipse_80%_70%_at_50%_40%,black,transparent)]`} />
-      <div aria-hidden="true" className="animate-glow absolute -top-40 end-[-10%] -z-10 size-[32rem] rounded-full bg-primary/20 blur-3xl" />
-      <div aria-hidden="true" className="animate-glow absolute -bottom-48 start-[-8%] -z-10 size-[26rem] rounded-full bg-brand-cyan/10 blur-3xl [animation-delay:2s]" />
+      <div aria-hidden="true" className="absolute -top-40 end-[-10%] -z-10 size-[32rem] rounded-full bg-radial from-primary/25 from-30% to-transparent to-70%" />
+      <div aria-hidden="true" className="absolute -bottom-48 start-[-8%] -z-10 size-[26rem] rounded-full bg-radial from-brand-cyan/12 from-30% to-transparent to-70%" />
 
       <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-4 pt-16 pb-20 md:pt-24 md:pb-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <div>
-          <h1 className="animate-fade-up text-3xl leading-[1.35] font-bold tracking-tight text-white md:text-5xl md:leading-[1.3]" style={delay("0.08s")}>
+          <h1 className="text-3xl leading-[1.35] font-bold tracking-tight text-white md:text-5xl md:leading-[1.3]">
             مرجع آموزش، شبیه‌سازی و خدمات مهندسی{" "}
             <span className="text-brand-cyan">CFD و CAE</span>
           </h1>
-          <p className="animate-fade-up mt-5 max-w-xl text-base leading-8 text-navy-foreground/75 md:text-lg" style={delay("0.16s")}>
+          <p className="mt-5 max-w-xl text-base leading-8 text-navy-foreground/75 md:text-lg">
             محصولات آموزشی، دوره‌های تخصصی، مشاوره و انجام پروژه‌های مهندسی
           </p>
-          <div className="animate-fade-up mt-9 flex flex-wrap gap-3" style={delay("0.24s")}>
+          <div className="mt-9 flex flex-wrap gap-3">
             <Link href="/products" className="btn btn-lg bg-white text-navy shadow-lg shadow-black/20 hover:bg-secondary">
               مشاهده محصولات
               <ArrowLeft aria-hidden="true" />
             </Link>
-            <Link href="/request-project" className="btn btn-lg border-white/20 bg-white/5 text-white backdrop-blur hover:border-white/35 hover:bg-white/10">
+            <Link href="/request-project" className="btn btn-lg border-white/20 bg-white/8 text-white hover:border-white/35 hover:bg-white/12">
               درخواست پروژه
             </Link>
           </div>
 
           <dl className="mt-12 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {stats.map(({ value, label, icon: Icon }, index) => (
+            {stats.map(({ value, label, icon: Icon }) => (
               <div
                 key={label}
-                className="animate-fade-up flex flex-col rounded-xl bg-white/6 p-4 ring-1 ring-white/10 backdrop-blur transition-[background-color,translate] duration-200 hover:-translate-y-0.5 hover:bg-white/10"
-                style={delay(`${0.32 + index * 0.08}s`)}
+                className="flex flex-col rounded-xl bg-white/7 p-4 ring-1 ring-white/10 transition-[background-color,translate] duration-200 hover:-translate-y-0.5 hover:bg-white/10 motion-reduce:hover:translate-y-0"
               >
                 <Icon className="size-4 text-brand-cyan" aria-hidden="true" />
                 <dt className="order-last mt-0.5 text-xs text-navy-foreground/65">{label}</dt>
@@ -68,8 +67,8 @@ export function HomeHero() {
           </dl>
         </div>
 
-        <div aria-hidden="true" className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none" style={delay("0.2s")}>
-          <div className="relative rounded-2xl bg-white/5 p-2 ring-1 ring-white/12 shadow-2xl shadow-black/30 backdrop-blur">
+        <div aria-hidden="true" className="animate-fade-up relative mx-auto w-full max-w-md lg:max-w-none" style={delay("0.1s")}>
+          <div className="relative rounded-2xl bg-white/6 p-2 ring-1 ring-white/12 shadow-2xl shadow-black/30">
             <div className="relative h-64 overflow-hidden rounded-xl bg-navy md:h-80">
               <div className={`absolute inset-0 opacity-60 ${gridLines} [background-size:26px_26px]`} />
               <svg viewBox="0 0 400 260" preserveAspectRatio="none" className="absolute inset-0 size-full">
@@ -80,11 +79,12 @@ export function HomeHero() {
                     <stop offset="1" stopColor="var(--primary)" stopOpacity="0.5" />
                   </linearGradient>
                 </defs>
-                {[62, 86, 110, 130, 150, 172, 196, 220].map((y) => {
-                  const above = y < 140;
-                  const bend = above ? y - 28 : y + 24;
-                  return <path key={y} d={`M0 ${y} C 120 ${y}, 160 ${bend}, 230 ${bend} S 330 ${y}, 400 ${y}`} fill="none" stroke="url(#hero-flow)" strokeWidth="1.3" />;
-                })}
+                <g fill="none" stroke="url(#hero-flow)" strokeWidth="1.3">
+                  {[62, 86, 110, 130, 150, 172, 196, 220].map((y) => {
+                    const bend = y < 140 ? y - 28 : y + 24;
+                    return <path key={y} d={`M0 ${y}C120 ${y} 160 ${bend} 230 ${bend}S330 ${y} 400 ${y}`} />;
+                  })}
+                </g>
                 <path d="M140 140 C 170 108, 255 108, 300 136 C 255 147, 185 151, 140 140 Z" fill="var(--navy-foreground)" opacity="0.95" />
               </svg>
               <div className="absolute start-3 top-3 flex items-center gap-2 rounded-md bg-white/10 px-2.5 py-1 text-[11px] text-navy-foreground ring-1 ring-white/15" dir="ltr">
@@ -114,7 +114,7 @@ export function HomeHero() {
           {floating.map(({ label, icon: Icon, className, delay: d }) => (
             <span
               key={label}
-              className={`animate-float absolute hidden items-center gap-2 rounded-xl bg-white/10 px-3 py-2 text-xs font-medium text-white shadow-lg shadow-black/20 ring-1 ring-white/15 backdrop-blur-md md:inline-flex ${className}`}
+              className={`animate-float absolute hidden items-center gap-2 rounded-xl bg-[color-mix(in_oklch,var(--navy),white_10%)] px-3 py-2 text-xs font-medium text-white shadow-lg shadow-black/20 ring-1 ring-white/15 md:inline-flex ${className}`}
               style={delay(d)}
               dir="ltr"
             >

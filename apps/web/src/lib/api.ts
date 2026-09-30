@@ -1,8 +1,10 @@
 import { notFound } from "next/navigation";
+import { cache } from "react";
 
 const apiOrigin = process.env.API_URL ?? "http://localhost:4000";
 
-export async function api<T>(path: string): Promise<T> {
+/** Uncached per request, but shared within one render so metadata and page reuse the same response. */
+export const api = cache(async function api<T>(path: string): Promise<T> {
   const response = await fetch(`${apiOrigin}/api/v1${path}`, { cache: "no-store" });
   if (response.status === 404) {
     notFound();
@@ -11,7 +13,10 @@ export async function api<T>(path: string): Promise<T> {
     throw new Error(`API ${response.status} for ${path}`);
   }
   return response.json() as Promise<T>;
-}
+});
+
+/** Syllabus counts only feed card summaries, so a short-lived shared cache is fresh enough. */
+const OUTLINE_REVALIDATE_SECONDS = 300;
 
 export type ProductCard = {
   id: string;
@@ -46,12 +51,17 @@ export function outlineOf({ sections }: OutlineSource): CourseOutline | null {
   return { sections: sections.length, lessons: lessons.length, minutes: lessons.reduce((sum, lesson) => sum + (lesson.durationMinutes ?? 0), 0) };
 }
 
-/** The list endpoint has no syllabus data, so course outlines come from each course's detail. */
+/**
+ * The list endpoint has no syllabus data, so course outlines come from each course's detail.
+ * Those detail responses are kept in the Data Cache, so repeat views make no extra API calls.
+ */
 export async function courseOutlines(items: ProductCard[]): Promise<Record<string, CourseOutline>> {
   const courses = items.filter((item) => item.type === "COURSE");
   const entries = await Promise.all(
     courses.map(async (course) => {
-      const response = await fetch(`${apiOrigin}/api/v1/products/${encodeURIComponent(course.slug)}`, { cache: "no-store" }).catch(() => null);
+      const response = await fetch(`${apiOrigin}/api/v1/products/${encodeURIComponent(course.slug)}`, {
+        next: { revalidate: OUTLINE_REVALIDATE_SECONDS },
+      }).catch(() => null);
       if (!response?.ok) return null;
       const outline = outlineOf((await response.json()) as OutlineSource);
       return outline ? ([course.id, outline] as const) : null;

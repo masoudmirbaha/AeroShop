@@ -52,7 +52,7 @@ function GateMessage({ icon: Icon, title, children }: { icon: LucideIcon; title:
       <span className="grid size-12 place-items-center rounded-xl bg-secondary text-primary ring-1 ring-primary/10 ring-inset">
         <Icon className="size-6" aria-hidden="true" />
       </span>
-      <p className="mt-4 font-semibold">{title}</p>
+      <h1 className="mt-4 text-base font-semibold">{title}</h1>
       {children ? <div className="mt-5">{children}</div> : null}
     </div>
   );

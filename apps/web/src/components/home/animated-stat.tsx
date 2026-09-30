@@ -1,21 +1,29 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 
+const digits = new Intl.NumberFormat("fa-IR");
+
+/** Counts up once when visible. Frames write to the DOM directly so the counter never re-renders. */
 export function AnimatedStat({ value, suffix = "+", duration = 1400 }: { value: number; suffix?: string; duration?: number }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [current, setCurrent] = useState(0);
 
   useEffect(() => {
     const node = ref.current;
     if (!node) return;
+    const show = (n: number) => {
+      node.textContent = `${digits.format(n)}${suffix}`;
+    };
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      show(value);
+      return;
+    }
     let frame = 0;
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     const run = () => {
       const start = performance.now();
       const tick = (now: number) => {
-        const progress = reduced ? 1 : Math.min(1, (now - start) / duration);
-        setCurrent(Math.round(value * (1 - Math.pow(1 - progress, 3))));
+        const progress = Math.min(1, (now - start) / duration);
+        show(Math.round(value * (1 - Math.pow(1 - progress, 3))));
         if (progress < 1) frame = requestAnimationFrame(tick);
       };
       frame = requestAnimationFrame(tick);
@@ -34,12 +42,18 @@ export function AnimatedStat({ value, suffix = "+", duration = 1400 }: { value: 
       observer.disconnect();
       cancelAnimationFrame(frame);
     };
-  }, [value, duration]);
+  }, [value, suffix, duration]);
 
   return (
-    <span ref={ref} className="tabular-nums">
-      {current.toLocaleString("fa-IR")}
-      {suffix}
-    </span>
+    <>
+      <span ref={ref} aria-hidden="true" className="tabular-nums">
+        {digits.format(0)}
+        {suffix}
+      </span>
+      <span className="sr-only">
+        {digits.format(value)}
+        {suffix}
+      </span>
+    </>
   );
 }

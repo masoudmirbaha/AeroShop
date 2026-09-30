@@ -1,7 +1,13 @@
 import { CalendarDays, NotebookPen } from "lucide-react";
+import type { Metadata } from "next";
 import { Card, EmptyState, Page } from "@/components/page";
 import { api } from "@/lib/api";
 import { formatPostDate, latestPosts, type PageItem } from "@/lib/posts";
+
+export const metadata: Metadata = {
+  title: "یادداشت‌ها",
+  description: "مطالب فنی، آموزشی و کاربردی در حوزه شبیه‌سازی و مهندسی CFD.",
+};
 
 export default async function BlogPage() {
   const posts = latestPosts(await api<PageItem[]>("/pages"));

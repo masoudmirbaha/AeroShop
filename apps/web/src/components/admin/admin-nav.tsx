@@ -20,7 +20,7 @@ export function AdminNav() {
   return (
     <nav aria-label="منوی مدیریت" className="surface overflow-hidden p-2 md:sticky md:top-24">
       <div className="relative mb-2 hidden overflow-hidden rounded-xl bg-navy p-4 text-navy-foreground md:block">
-        <div aria-hidden="true" className="absolute -end-6 -top-8 size-24 rounded-full bg-primary/25 blur-2xl" />
+        <div aria-hidden="true" className="absolute -end-6 -top-8 size-24 rounded-full bg-radial from-primary/30 from-20% to-transparent to-70%" />
         <div className="relative flex items-center gap-3">
           <span className="grid size-9 place-items-center rounded-lg bg-white/10 text-brand-cyan ring-1 ring-white/15">
             <ShieldCheck className="size-4.5" aria-hidden="true" />

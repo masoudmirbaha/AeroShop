@@ -37,7 +37,7 @@ export function PageHeader({ title, description, breadcrumbs, actions, width = "
         aria-hidden="true"
         className="absolute inset-0 -z-10 [background-image:linear-gradient(to_right,color-mix(in_oklch,var(--navy)_5%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--navy)_5%,transparent)_1px,transparent_1px)] [background-size:32px_32px] mask-[radial-gradient(ellipse_70%_120%_at_15%_0%,black,transparent_75%)]"
       />
-      <div aria-hidden="true" className="absolute -top-24 end-[-6rem] -z-10 size-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+      <div aria-hidden="true" className="absolute -top-24 end-[-6rem] -z-10 size-80 rounded-full bg-radial from-brand-cyan/12 from-30% to-transparent to-70%" />
       <svg
         aria-hidden="true"
         viewBox="0 0 480 200"

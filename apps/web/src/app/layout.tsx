@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist_Mono, Vazirmatn } from "next/font/google";
+import { Vazirmatn } from "next/font/google";
 import { APP_NAME } from "@aeroshop/shared";
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { SessionProvider } from "@/components/session-provider";
@@ -10,11 +10,7 @@ import "./globals.css";
 const vazirmatn = Vazirmatn({
   variable: "--font-sans",
   subsets: ["arabic", "latin"],
-});
-
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -30,7 +26,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
     <html
       lang="fa"
       dir="rtl"
-      className={`${vazirmatn.variable} ${geistMono.variable} h-full antialiased`}
+      className={`${vazirmatn.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
         <DirectionProvider direction="rtl">

@@ -8,7 +8,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
-  --font-mono: var(--font-geist-mono);
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
   --font-heading: var(--font-sans);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
@@ -200,16 +200,6 @@
   }
 }
 
-@keyframes aero-glow {
-  0%,
-  100% {
-    opacity: 0.55;
-  }
-  50% {
-    opacity: 0.85;
-  }
-}
-
 @layer components {
   .animate-float {
     animation: aero-float 6s ease-in-out infinite;
@@ -219,15 +209,17 @@
     animation: aero-fade-up 0.6s cubic-bezier(0.22, 1, 0.36, 1) both;
     animation-delay: var(--delay, 0s);
   }
-  .animate-glow {
-    animation: aero-glow 7s ease-in-out infinite;
-  }
   @media (prefers-reduced-motion: reduce) {
     .animate-float,
-    .animate-fade-up,
-    .animate-glow {
+    .animate-fade-up {
       animation: none;
     }
+  }
+
+  /* Offscreen homepage sections skip layout and paint until scrolled near; `auto` keeps their last measured height. */
+  .below-fold {
+    content-visibility: auto;
+    contain-intrinsic-size: auto 720px;
   }
 
   /* Full-width tinted band used to separate homepage sections. */

@@ -1,8 +1,14 @@
 import { HelpCircle } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { FaqList, type FaqEntry } from "@/components/faq-list";
 import { EmptyState, Page } from "@/components/page";
 import { api } from "@/lib/api";
+
+export const metadata: Metadata = {
+  title: "پرسش‌های متداول",
+  description: "پاسخ پرسش‌های رایج درباره خرید، دانلود و خدمات AeroShop.",
+};
 
 export default async function FaqPage() {
   const items = await api<FaqEntry[]>("/faq");

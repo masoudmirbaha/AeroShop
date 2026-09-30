@@ -11,7 +11,7 @@ function PostCard({ post }: { post: Post }) {
       <div className="relative h-44 w-full shrink-0 overflow-hidden rounded-t-[inherit] md:h-48">
         <SimVisual kind={post.visual} seed={visualFor({ slug: post.slug, title: post.title }).seed} label={false} className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]" />
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-navy/35 via-transparent to-transparent" />
-        <span className="badge absolute start-3 top-3 bg-card/90 text-foreground shadow-sm backdrop-blur">{post.category}</span>
+        <span className="badge absolute start-3 top-3 bg-card/95 text-foreground shadow-sm">{post.category}</span>
       </div>
       <div className="flex flex-1 flex-col px-5 pt-4 pb-5">
         <p className="flex items-center gap-1.5 text-xs text-muted-foreground">

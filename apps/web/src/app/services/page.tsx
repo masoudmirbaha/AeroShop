@@ -1,10 +1,16 @@
 import { ArrowLeft } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { IconTile, Page } from "@/components/page";
 import { serviceIcon } from "@/components/service-icon";
 import { api } from "@/lib/api";
 
 type Service = { id: string; title: string; slug: string; summary: string };
+
+export const metadata: Metadata = {
+  title: "خدمات شبیه‌سازی و مشاوره",
+  description: "مشاوره رایگان، انجام پروژه CFD، آموزش خصوصی و پشتیبانی فنی با وضعیت قابل پیگیری در حساب کاربری.",
+};
 
 export default async function ServicesPage() {
   const services = await api<Service[]>("/services");

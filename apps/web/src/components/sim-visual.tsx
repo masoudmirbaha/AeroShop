@@ -74,7 +74,20 @@ function random(seed: number) {
 }
 
 const n = (value: number) => Math.round(value * 10) / 10;
-const poly = (points: [number, number][]) => points.map(([x, y], i) => `${i ? "L" : "M"}${n(x)} ${n(y)}`).join(" ");
+// Dense scenes are serialized into both HTML and the RSC payload, so polylines drop points that are
+// exactly collinear after rounding and rely on implicit line-tos.
+function poly(points: [number, number][]) {
+  const rounded = points.map(([x, y]): [number, number] => [n(x), n(y)]);
+  const kept = rounded.filter((point, i) => {
+    const prev = rounded[i - 1];
+    const next = rounded[i + 1];
+    if (!prev || !next) return true;
+    const cross = (point[0] - prev[0]) * (next[1] - point[1]) - (point[1] - prev[1]) * (next[0] - point[0]);
+    const forward = (point[0] - prev[0]) * (next[0] - point[0]) + (point[1] - prev[1]) * (next[1] - point[1]) > 0;
+    return Math.abs(cross) > 1e-9 || !forward;
+  });
+  return `M${kept.map(([x, y]) => `${x} ${y}`).join(" ")}`;
+}
 
 const C = {
   pale: "var(--navy-foreground)",
@@ -95,21 +108,15 @@ function Airfoil({ id, seed }: { id: string; seed: number }) {
         <stop offset="1" stopColor={C.cyan} stopOpacity="0" />
       </radialGradient>
       <ellipse cx="118" cy="100" rx="90" ry="54" fill={`url(#${id}-p)`} />
-      {Array.from({ length: 11 }, (_, i) => {
-        const y = 22 + i * 15.5;
-        const bump = 30 * lift * Math.exp(-(((y - 100) / 46) ** 2));
-        const up = y < 100;
-        const mid = up ? y - bump : y + bump * 0.55;
-        return (
-          <path
-            key={y}
-            d={`M0 ${n(y)} C 90 ${n(y)}, 105 ${n(mid)}, 165 ${n(mid)} S 255 ${n(y + (up ? 6 : 3))}, 320 ${n(y + (up ? 8 : 4))}`}
-            fill="none"
-            stroke={`url(#${id}-line)`}
-            strokeWidth="1.1"
-          />
-        );
-      })}
+      <g fill="none" stroke={`url(#${id}-line)`} strokeWidth="1.1">
+        {Array.from({ length: 11 }, (_, i) => {
+          const y = 22 + i * 15.5;
+          const bump = 30 * lift * Math.exp(-(((y - 100) / 46) ** 2));
+          const up = y < 100;
+          const mid = up ? y - bump : y + bump * 0.55;
+          return <path key={y} d={`M0 ${n(y)}C90 ${n(y)} 105 ${n(mid)} 165 ${n(mid)}S255 ${n(y + (up ? 6 : 3))} 320 ${n(y + (up ? 8 : 4))}`} />;
+        })}
+      </g>
       <path d="M86 100 C 110 78, 190 78, 236 99 C 190 105, 120 109, 86 100 Z" transform={`rotate(${aoa} 160 100)`} fill={C.pale} opacity="0.95" />
     </>
   );
@@ -269,15 +276,17 @@ function DynamicMesh({ seed }: { seed: number }) {
     const push = 16 * Math.exp(-((d / 55) ** 2));
     return [x + (dx / d) * push, y + (dy / d) * push];
   };
-  const cols = Array.from({ length: 21 }, (_, i) => i * 16);
-  const rows = Array.from({ length: 14 }, (_, i) => i * 16);
+  const cols = Array.from({ length: 21 }, (_, i) => poly(Array.from({ length: 13 }, (_, j) => warp(i * 16, (j * 200) / 12))));
+  const rows = Array.from({ length: 14 }, (_, i) => poly(Array.from({ length: 21 }, (_, j) => warp(j * 16, i * 16))));
+  // Lines within one family never cross, so merging them keeps the crossings' opacity identical.
+  const families = [cols, rows].flatMap((lines) => [
+    { d: lines.filter((_, i) => i % 4).join(""), stroke: C.pale, opacity: 0.22 },
+    { d: lines.filter((_, i) => !(i % 4)).join(""), stroke: C.cyan, opacity: 0.5 },
+  ]);
   return (
     <>
-      {cols.map((x, i) => (
-        <path key={`c${x}`} d={poly(Array.from({ length: 26 }, (_, j) => warp(x, j * 8)))} fill="none" stroke={i % 4 ? C.pale : C.cyan} strokeWidth="0.6" opacity={i % 4 ? 0.22 : 0.5} />
-      ))}
-      {rows.map((y, i) => (
-        <path key={`r${y}`} d={poly(Array.from({ length: 41 }, (_, j) => warp(j * 8, y)))} fill="none" stroke={i % 4 ? C.pale : C.cyan} strokeWidth="0.6" opacity={i % 4 ? 0.22 : 0.5} />
+      {families.map(({ d, stroke, opacity }, i) => (
+        <path key={i} d={d} fill="none" stroke={stroke} strokeWidth="0.6" opacity={opacity} />
       ))}
       <circle cx={n(cx)} cy={cy} r="18" fill={C.pale} opacity="0.92" />
       <path d={`M${n(cx - 6)} ${cy} h12 m-4 -3 l4 3 l-4 3`} fill="none" stroke={C.blue} strokeWidth="1.4" />
@@ -294,16 +303,18 @@ function Fsi({ id, seed }: { id: string; seed: number }) {
         <stop offset="0" stopColor={C.warm} />
         <stop offset="1" stopColor={C.cyan} />
       </linearGradient>
-      {Array.from({ length: 9 }, (_, i) => {
-        const y = 28 + i * 18;
-        const points = Array.from({ length: 33 }, (_, j): [number, number] => {
-          const x = j * 10;
-          const amp = x > 110 ? ((x - 110) / 210) * 9 * Math.exp(-(((y - 100) / 70) ** 2)) : 0;
-          const avoid = 18 * Math.exp(-(((x - 88) / 30) ** 2)) * Math.exp(-(((y - 100) / 26) ** 2)) * Math.sign(y - 100);
-          return [x, y + avoid + amp * Math.sin(x / 16)];
-        });
-        return <path key={y} d={poly(points)} fill="none" stroke={C.cyan} strokeWidth="0.9" opacity="0.5" />;
-      })}
+      <g fill="none" stroke={C.cyan} strokeWidth="0.9">
+        {Array.from({ length: 9 }, (_, i) => {
+          const y = 28 + i * 18;
+          const points = Array.from({ length: 33 }, (_, j): [number, number] => {
+            const x = j * 10;
+            const amp = x > 110 ? ((x - 110) / 210) * 9 * Math.exp(-(((y - 100) / 70) ** 2)) : 0;
+            const avoid = 18 * Math.exp(-(((x - 88) / 30) ** 2)) * Math.exp(-(((y - 100) / 26) ** 2)) * Math.sign(y - 100);
+            return [x, y + avoid + amp * Math.sin(x / 16)];
+          });
+          return <path key={y} d={poly(points)} opacity="0.5" />;
+        })}
+      </g>
       {[200, 245, 290].map((x, i) => (
         <ellipse key={x} cx={x} cy={i % 2 ? 118 : 82} rx="12" ry="7" fill="none" stroke={C.pale} strokeWidth="0.8" opacity="0.35" />
       ))}
@@ -376,12 +387,6 @@ function Structure({ id, seed }: { id: string; seed: number }) {
   const r = random(seed);
   const hole = 20 + r() * 20;
   const shape = "M60 40 H130 V120 H270 V170 H60 Z";
-  const triangles: string[] = [];
-  for (let y = 40; y < 170; y += 13) {
-    for (let x = 60; x < 270; x += 15) {
-      triangles.push(`M${x} ${y} L${x + 15} ${y} L${x} ${y + 13} Z M${x + 15} ${y} L${x + 15} ${y + 13} L${x} ${y + 13}`);
-    }
-  }
   return (
     <>
       <radialGradient id={`${id}-st`} cx="0.3" cy="0.6" r="0.6">
@@ -390,13 +395,12 @@ function Structure({ id, seed }: { id: string; seed: number }) {
         <stop offset="0.7" stopColor={C.cyan} stopOpacity="0.45" />
         <stop offset="1" stopColor={C.blue} stopOpacity="0.4" />
       </radialGradient>
-      <clipPath id={`${id}-clip`}>
-        <path d={shape} />
-      </clipPath>
+      {/* One triangulated 15×13 cell; edges are drawn on both sides so neighbouring tiles form full-width strokes. */}
+      <pattern id={`${id}-tri`} x="60" y="40" width="15" height="13" patternUnits="userSpaceOnUse">
+        <path d="M0 0H15V13H0ZM15 0L0 13" fill="none" stroke={C.pale} strokeWidth="0.4" />
+      </pattern>
       <path d={shape} fill={`url(#${id}-st)`} />
-      <g clipPath={`url(#${id}-clip)`}>
-        <path d={triangles.join(" ")} fill="none" stroke={C.pale} strokeWidth="0.4" opacity="0.35" />
-      </g>
+      <path d={shape} fill={`url(#${id}-tri)`} opacity="0.35" />
       <path d={shape} fill="none" stroke={C.pale} strokeWidth="1.2" opacity="0.8" />
       <circle cx="95" cy={n(60 + hole)} r="10" fill="var(--sim-bg)" stroke={C.pale} strokeOpacity="0.8" />
     </>
@@ -477,7 +481,7 @@ export function SimVisual({ kind, seed, className, label = true, decorative = fa
         </span>
       ) : null}
       {label ? (
-        <span dir="ltr" aria-hidden="true" className="absolute bottom-2.5 left-2.5 rounded bg-black/25 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-white/80 backdrop-blur-sm">
+        <span dir="ltr" aria-hidden="true" className="absolute bottom-2.5 left-2.5 rounded bg-black/35 px-1.5 py-0.5 text-[10px] font-medium tracking-wide text-white/80">
           {meta[kind].label}
         </span>
       ) : null}

@@ -39,12 +39,12 @@ export default function ProfilePage() {
           <div className="surface h-56 animate-pulse bg-card/60" />
         </div>
       ) : (
-        <div className="grid items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
+        <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <aside className="surface flex flex-col items-center p-6 text-center">
             <span aria-hidden="true" className="grid size-20 place-items-center avatar-fill rounded-full text-2xl font-semibold shadow-lg shadow-navy/15">
               {initial}
             </span>
-            <p className="mt-4 font-semibold">{name}</p>
+            <p className="mt-4 max-w-full truncate font-semibold">{name}</p>
             <span className={`badge mt-2 ${user.role === "ADMIN" ? "badge-accent" : "badge-muted"}`}>{user.role === "ADMIN" ? "مدیر سایت" : "کاربر"}</span>
             <Link href="/account/orders" className="btn btn-outline btn-sm mt-6 w-full">
               مشاهده سفارش‌ها

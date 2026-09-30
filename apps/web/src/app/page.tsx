@@ -35,7 +35,7 @@ function MoreLink({ href, children }: { href: string; children: string }) {
 
 function Band({ children, tinted, lead }: { children: ReactNode; tinted?: boolean; lead?: boolean }) {
   return (
-    <div className={tinted ? "section-band" : lead ? "section-lead" : undefined}>
+    <div className={tinted ? "section-band below-fold" : lead ? "section-lead" : "below-fold"}>
       <div className="mx-auto w-full max-w-6xl px-4 py-16 md:py-20">{children}</div>
     </div>
   );
@@ -168,7 +168,7 @@ export default async function Home() {
         <LatestPosts posts={posts} />
       </Band>
 
-      <div className="mx-auto grid w-full max-w-6xl gap-16 px-4 pb-16 md:gap-20 md:pb-20">
+      <div className="below-fold mx-auto grid w-full max-w-6xl gap-16 px-4 pb-16 md:gap-20 md:pb-20">
         {testimonials.length ? (
           <Section title="نظر مهندسان">
             <div className={`grid gap-5 ${testimonials.length > 1 ? "md:grid-cols-2" : ""}`}>

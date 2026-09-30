@@ -1,6 +1,12 @@
 import { Cpu, GraduationCap, Workflow } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, IconTile, Page } from "@/components/page";
+
+export const metadata: Metadata = {
+  title: "درباره ما",
+  description: "AeroShop برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند.",
+};
 
 const pillars = [
   { icon: GraduationCap, title: "آموزش مسئله‌محور", text: "مثال‌ها روی مسئله واقعی مهندسی بسته شده‌اند، نه فقط معرفی منوهای نرم‌افزار." },

@@ -57,7 +57,8 @@ export function SiteHeader() {
     const header = headerRef.current;
     if (!header) return;
     const onScroll = () => {
-      header.dataset.scrolled = window.scrollY > 4 ? "true" : "false";
+      const scrolled = window.scrollY > 4 ? "true" : "false";
+      if (header.dataset.scrolled !== scrolled) header.dataset.scrolled = scrolled;
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });

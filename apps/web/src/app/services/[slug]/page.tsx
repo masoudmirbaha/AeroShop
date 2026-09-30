@@ -1,4 +1,5 @@
 import { CheckCircle2 } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Card, IconTile, Page } from "@/components/page";
 import { serviceIcon } from "@/components/service-icon";
@@ -7,6 +8,11 @@ import { api } from "@/lib/api";
 type Service = { title: string; slug: string; summary: string; description: string };
 
 const steps = ["ثبت درخواست با شرح مسئله", "بررسی توسط مهندس و تعیین مسیر", "پیگیری وضعیت از حساب کاربری"];
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const service = await api<Service>(`/services/${(await params).slug}`);
+  return { title: service.title, description: service.summary };
+}
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;

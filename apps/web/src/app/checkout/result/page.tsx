@@ -1,6 +1,9 @@
 import { CheckCircle2, XCircle } from "lucide-react";
+import type { Metadata } from "next";
 import Link from "next/link";
 import { Page } from "@/components/page";
+
+export const metadata: Metadata = { title: "نتیجه پرداخت", robots: { index: false } };
 
 export default async function CheckoutResultPage({
   searchParams,

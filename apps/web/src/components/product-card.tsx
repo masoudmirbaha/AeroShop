@@ -118,11 +118,11 @@ export function ProductCardView({ product, outline }: { product: ProductCard; ou
       <div className="relative shrink-0 overflow-hidden rounded-t-[inherit]">
         <ProductVisual product={product} className={cardFrame} />
         <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
-          <span className="badge bg-card/90 text-foreground shadow-sm backdrop-blur">{typeLabel(product.type)}</span>
+          <span className="badge bg-card/95 text-foreground shadow-sm">{typeLabel(product.type)}</span>
           {discount ? <span className="badge bg-card text-primary shadow-sm tabular-nums">٪{discount.toLocaleString("fa-IR")} تخفیف</span> : null}
         </div>
         {course ? (
-          <span className="absolute start-3 bottom-3 inline-flex items-center gap-1.5 rounded-md bg-navy/80 px-2 py-1 text-[11px] font-medium text-navy-foreground ring-1 ring-white/10 backdrop-blur">
+          <span className="absolute start-3 bottom-3 inline-flex items-center gap-1.5 rounded-md bg-navy/90 px-2 py-1 text-[11px] font-medium text-navy-foreground ring-1 ring-white/10">
             <GraduationCap className="size-3.5 text-brand-cyan" aria-hidden="true" />
             دوره آموزشی
           </span>

@@ -1,6 +1,9 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { AdminGate } from "@/components/admin/admin-gate";
 import { AdminNav } from "@/components/admin/admin-nav";
+
+export const metadata: Metadata = { title: "مدیریت", robots: { index: false } };
 
 export default function AdminLayout({ children }: { children: ReactNode }) {
   return (

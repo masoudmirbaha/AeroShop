@@ -1,6 +1,6 @@
 {
   "name": "aeroshop",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "private": true,
   "description": "AeroShop - digital CFD products and engineering services",
   "packageManager": "pnpm@12.6.0",
