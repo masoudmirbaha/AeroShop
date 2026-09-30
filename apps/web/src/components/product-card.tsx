@@ -1,14 +1,10 @@
-import { ArrowLeft, FileBox, Gift, GraduationCap, Layers } from "lucide-react";
+import { ArrowLeft, BookOpen, Clock, Download, FileDown, FileText, GraduationCap, Layers, type LucideIcon } from "lucide-react";
+import Image from "next/image";
 import Link from "next/link";
-import { typeLabel } from "@/lib/format";
-import type { ProductCard } from "@/lib/api";
-
-const typeIcons = {
-  SINGLE_PRODUCT: FileBox,
-  BUNDLE: Layers,
-  COURSE: GraduationCap,
-  FREE: Gift,
-} as const;
+import { SimVisual, visualFor } from "@/components/sim-visual";
+import { formatMinutes, typeLabel } from "@/lib/format";
+import type { CourseOutline, ProductCard } from "@/lib/api";
+import { cn } from "@/lib/utils";
 
 export function productHref(product: Pick<ProductCard, "type" | "slug">) {
   return product.type === "COURSE" ? `/courses/${product.slug}` : `/products/${product.slug}`;
@@ -33,65 +29,123 @@ function discountPercent(product: ProductCard) {
   return Math.round((1 - product.price / product.comparePrice) * 100);
 }
 
-export function ProductVisual({ product, className = "h-40" }: { product: ProductCard; className?: string }) {
-  const Icon = typeIcons[product.type] ?? FileBox;
+/** Topic-matched technical visual; falls back to a generated simulation scene when no image is uploaded. */
+export function ProductVisual({ product, className = "aspect-[16/10]", sizes = "(min-width: 1024px) 360px, (min-width: 640px) 50vw, 100vw" }: { product: ProductCard; className?: string; sizes?: string }) {
   if (product.image) {
     return (
-      <div aria-hidden="true" className={`overflow-hidden rounded-xl bg-muted ${className}`}>
-        <div className="size-full bg-cover bg-center transition-transform duration-500 group-hover:scale-105" style={{ backgroundImage: `url(${product.image})` }} />
+      <div className={cn("relative overflow-hidden bg-(--sim-bg)", className)}>
+        <Image
+          src={product.image}
+          alt={`تصویر ${product.title}`}
+          fill
+          sizes={sizes}
+          unoptimized={!product.image.startsWith("/")}
+          className="object-cover object-center transition-transform duration-500 group-hover:scale-[1.03]"
+        />
+        <div aria-hidden="true" className="absolute inset-0 bg-linear-to-t from-navy/45 via-navy/5 to-transparent" />
       </div>
     );
   }
+  const { kind, seed } = visualFor(product);
   return (
-    <div aria-hidden="true" className={`relative overflow-hidden rounded-xl bg-linear-to-br from-secondary via-secondary/50 to-accent ring-1 ring-primary/10 ring-inset ${className}`}>
-      <div className="tech-grid absolute inset-0 mask-[radial-gradient(ellipse_at_center,black,transparent_75%)]" />
-      <svg
-        viewBox="0 0 200 80"
-        preserveAspectRatio="none"
-        className="absolute inset-0 size-full text-primary/30 transition-transform duration-500 ease-out group-hover:scale-105"
-      >
-        <path d="M0 52 C 50 30, 110 30, 200 44" fill="none" stroke="currentColor" strokeWidth="1" />
-        <path d="M0 62 C 60 44, 120 46, 200 56" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.7" />
-        <path d="M0 40 C 45 18, 115 16, 200 30" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.5" />
-        <path d="M0 70 C 70 58, 130 60, 200 66" fill="none" stroke="currentColor" strokeWidth="1" opacity="0.35" />
-      </svg>
-      <div className="absolute -end-10 -bottom-12 size-36 rounded-full bg-brand-cyan/20 blur-2xl transition-opacity duration-500 group-hover:opacity-100" />
-      <span className="absolute inset-0 m-auto grid size-14 place-items-center rounded-2xl bg-card/90 text-primary shadow-md shadow-primary/10 ring-1 ring-primary/10 backdrop-blur-sm transition-transform duration-300 group-hover:-translate-y-1">
-        <Icon className="size-6" />
-      </span>
+    <div className={cn("relative overflow-hidden", className)}>
+      <SimVisual kind={kind} seed={seed} className="absolute inset-0 transition-transform duration-500 group-hover:scale-[1.03]" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-linear-to-t from-navy/35 via-transparent to-transparent" />
     </div>
   );
 }
 
-export function ProductCardView({ product }: { product: ProductCard }) {
+const cardFrame = "h-48 w-full shrink-0 md:h-52";
+
+const levelSteps = { BEGINNER: 1, INTERMEDIATE: 2, ADVANCED: 3 } as const;
+
+function LevelMeter({ level }: { level: ProductCard["level"] }) {
+  if (!level) return null;
+  const steps = levelSteps[level];
+  return (
+    <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+      <span aria-hidden="true" className="flex items-end gap-0.5">
+        {[1, 2, 3].map((step) => (
+          <span key={step} className={cn("w-1 rounded-sm", step <= steps ? "bg-primary" : "bg-border")} style={{ height: `${4 + step * 3}px` }} />
+        ))}
+      </span>
+      {typeLabel(level)}
+    </span>
+  );
+}
+
+const productKinds: Record<string, { icon: LucideIcon; label: string }> = {
+  SINGLE_PRODUCT: { icon: FileText, label: "آموزش تک‌موضوعی" },
+  BUNDLE: { icon: Layers, label: "بسته‌ی آموزشی" },
+  FREE: { icon: Download, label: "دانلود رایگان" },
+};
+
+function Meta({ icon: Icon, children }: { icon: LucideIcon; children: string }) {
+  return (
+    <span className="inline-flex min-w-0 items-center gap-1.5">
+      <Icon className="size-3.5 shrink-0 text-muted-foreground/80" aria-hidden="true" />
+      <span className="truncate">{children}</span>
+    </span>
+  );
+}
+
+function CardFacts({ product, outline }: { product: ProductCard; outline?: CourseOutline }) {
+  if (product.type === "COURSE") {
+    if (!outline) return null;
+    return (
+      <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+        <Meta icon={BookOpen}>{`${outline.sections.toLocaleString("fa-IR")} فصل · ${outline.lessons.toLocaleString("fa-IR")} درس`}</Meta>
+        {outline.minutes ? <Meta icon={Clock}>{formatMinutes(outline.minutes)}</Meta> : null}
+      </p>
+    );
+  }
+  const kind = productKinds[product.type];
+  if (!kind) return null;
+  return (
+    <p className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
+      <Meta icon={kind.icon}>{kind.label}</Meta>
+      {product.isDigital && product.type !== "FREE" ? <Meta icon={FileDown}>فایل دیجیتال</Meta> : null}
+    </p>
+  );
+}
+
+export function ProductCardView({ product, outline }: { product: ProductCard; outline?: CourseOutline }) {
   const href = productHref(product);
   const discount = discountPercent(product);
+  const course = product.type === "COURSE";
   return (
-    <article className="surface card-glow group relative flex flex-col p-2.5">
-      <div className="relative">
-        <ProductVisual product={product} />
-        <div className="absolute inset-x-2.5 top-2.5 flex items-start justify-between gap-2">
-          <div className="flex flex-wrap gap-1.5">
-            <span className="badge bg-card/90 shadow-sm backdrop-blur">{typeLabel(product.type)}</span>
-            {product.level ? <span className="badge bg-card/80 text-muted-foreground shadow-sm backdrop-blur">{typeLabel(product.level)}</span> : null}
-          </div>
-          {discount ? <span className="badge bg-primary text-primary-foreground shadow-sm tabular-nums">٪{discount.toLocaleString("fa-IR")} تخفیف</span> : null}
+    <article className="surface card-glow group relative flex flex-col overflow-hidden">
+      <div className="relative shrink-0 overflow-hidden rounded-t-[inherit]">
+        <ProductVisual product={product} className={cardFrame} />
+        <div className="absolute inset-x-3 top-3 flex items-start justify-between gap-2">
+          <span className="badge bg-card/90 text-foreground shadow-sm backdrop-blur">{typeLabel(product.type)}</span>
+          {discount ? <span className="badge bg-card text-primary shadow-sm tabular-nums">٪{discount.toLocaleString("fa-IR")} تخفیف</span> : null}
         </div>
+        {course ? (
+          <span className="absolute start-3 bottom-3 inline-flex items-center gap-1.5 rounded-md bg-navy/80 px-2 py-1 text-[11px] font-medium text-navy-foreground ring-1 ring-white/10 backdrop-blur">
+            <GraduationCap className="size-3.5 text-brand-cyan" aria-hidden="true" />
+            دوره آموزشی
+          </span>
+        ) : null}
       </div>
 
-      <div className="flex flex-1 flex-col px-2.5 pt-4 pb-2">
-        {product.topic || product.category ? <p className="text-xs font-medium text-primary/80">{product.topic?.name ?? product.category?.name}</p> : null}
+      <div className={cn("flex flex-1 flex-col px-4 pt-4 pb-4", course && "border-t-2 border-primary/15")}>
+        <div className="flex items-center justify-between gap-2">
+          {product.topic || product.category ? <p className="truncate text-xs font-medium text-primary/80">{product.topic?.name ?? product.category?.name}</p> : <span />}
+          {course ? <LevelMeter level={product.level} /> : product.level ? <span className="shrink-0 text-xs text-muted-foreground">{typeLabel(product.level)}</span> : null}
+        </div>
         <h3 className="mt-1.5 text-base leading-7 font-semibold transition-colors group-hover:text-primary">
           <Link href={href} className="outline-none after:absolute after:inset-0 after:rounded-2xl focus-visible:after:ring-3 focus-visible:after:ring-ring/50">
             {product.title}
           </Link>
         </h3>
         <p className="mt-1.5 line-clamp-2 flex-1 text-sm leading-6 text-muted-foreground">{product.summary}</p>
+        <CardFacts product={product} outline={outline} />
 
-        <div className="mt-5 flex items-end justify-between gap-3">
+        <div className="mt-4 flex items-end justify-between gap-3 border-t border-border/70 pt-4">
           <PriceTag price={product.price} comparePrice={product.comparePrice} />
           <span className="btn btn-sm shrink-0 bg-secondary text-secondary-foreground transition-colors group-hover:bg-primary group-hover:text-primary-foreground">
-            مشاهده
+            {course ? "مشاهده دوره" : "مشاهده"}
             <ArrowLeft aria-hidden="true" className="transition-transform duration-200 group-hover:-translate-x-0.5" />
           </span>
         </div>

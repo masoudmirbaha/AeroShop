@@ -5,27 +5,32 @@ import Link from "next/link";
 import { useEffect, useState } from "react";
 import { AccountNav } from "@/components/account/account-nav";
 import { EmptyState, IconTile, Page } from "@/components/page";
+import { authFetch, useRequireAuth } from "@/components/session-provider";
 
 type Grant = { id: string; filename: string; productTitle: string };
 
 export default function DownloadsPage() {
+  const { status, expired } = useRequireAuth();
   const [grants, setGrants] = useState<Grant[] | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetch("/api/v1/downloads", { credentials: "include" }).then(async (response) => {
-        setGrants(response.ok ? await response.json() : []);
-      });
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    void authFetch("/api/v1/downloads").then(async (response) => {
+      if (cancelled) return;
+      if (response.status === 401) return expired();
+      setGrants(response.ok ? await response.json() : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, expired]);
 
   return (
     <Page
-      eyebrow="حساب کاربری"
       title="دانلودهای من"
       description="فایل‌های محصولاتی که خریده‌اید. لینک‌ها با مجوز اختصاصی حساب شما باز می‌شوند."
-      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "حساب کاربری", href: "/account" }, { label: "دانلودها" }]}
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "داشبورد", href: "/account" }, { label: "دانلودها" }]}
     >
       <AccountNav />
       {grants === null ? (

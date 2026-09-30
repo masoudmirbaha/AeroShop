@@ -3,14 +3,12 @@
 import { ArrowLeft, CircleCheck, Download, LayoutDashboard, LogOut, Package, UserRound, Wallet, type LucideIcon } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { AccountNav, StatCard } from "@/components/account/account-nav";
 import { orderStatusLabels } from "@/components/admin/labels";
 import { IconTile, Page } from "@/components/page";
-import { useSession } from "@/components/session-provider";
+import { authFetch, useRequireAuth } from "@/components/session-provider";
 import { formatPrice } from "@/lib/format";
 
-type User = { email: string; firstName: string; lastName: string; role: string };
 type Order = { id: string; status: string; total: number; items: { id: string; productName: string; quantity: number }[] };
 type Summary = { orders: Order[]; downloads: number };
 
@@ -27,36 +25,35 @@ const statusTone: Record<string, string> = {
   CANCELLED: "badge-muted",
 };
 
-async function loadSummary(): Promise<Summary> {
-  const [orders, downloads] = await Promise.all([
-    fetch("/api/v1/orders", { credentials: "include" }).then((response) => (response.ok ? (response.json() as Promise<Order[]>) : [])),
-    fetch("/api/v1/downloads", { credentials: "include" }).then((response) => (response.ok ? (response.json() as Promise<unknown[]>) : [])),
-  ]);
-  return { orders, downloads: downloads.length };
+async function loadSummary(): Promise<Summary | null> {
+  const [orders, downloads] = await Promise.all([authFetch("/api/v1/orders"), authFetch("/api/v1/downloads")]);
+  if (orders.status === 401 || downloads.status === 401) return null;
+  return {
+    orders: orders.ok ? ((await orders.json()) as Order[]) : [],
+    downloads: downloads.ok ? ((await downloads.json()) as unknown[]).length : 0,
+  };
 }
 
 export default function AccountPage() {
-  const router = useRouter();
-  const { logout } = useSession();
-  const [user, setUser] = useState<User | null>(null);
+  const { status, user, logout, expired } = useRequireAuth();
   const [summary, setSummary] = useState<Summary | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetch("/api/v1/auth/me", { credentials: "include" }).then(async (response) => {
-        if (!response.ok) {
-          router.push("/login");
-          return;
-        }
-        const body = await response.json();
-        setUser(body.user);
-        loadSummary()
-          .then(setSummary)
-          .catch(() => setSummary({ orders: [], downloads: 0 }));
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    loadSummary()
+      .then((result) => {
+        if (cancelled) return;
+        if (result) setSummary(result);
+        else expired();
+      })
+      .catch(() => {
+        if (!cancelled) setSummary({ orders: [], downloads: 0 });
       });
-    }, 0);
-    return () => clearTimeout(timer);
-  }, [router]);
+    return () => {
+      cancelled = true;
+    };
+  }, [status, expired]);
 
   const name = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "";
   const initial = user ? (user.firstName || user.email).charAt(0).toUpperCase() : "";
@@ -66,10 +63,9 @@ export default function AccountPage() {
 
   return (
     <Page
-      eyebrow="حساب کاربری"
-      title={user ? `سلام، ${name}` : "حساب کاربری"}
+      title={user ? `سلام، ${name}` : "داشبورد"}
       description="سفارش‌ها، فایل‌های قابل دانلود و اطلاعات حساب خود را از این‌جا مدیریت کنید."
-      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "حساب کاربری" }]}
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "داشبورد" }]}
     >
       <AccountNav />
       {!user ? (
@@ -89,11 +85,11 @@ export default function AccountPage() {
 
           <div className="grid items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
             <aside className="surface overflow-hidden">
-              <div className="relative h-20 bg-linear-to-l from-primary to-brand-cyan">
+              <div className="relative h-20 bg-navy">
                 <div aria-hidden="true" className="absolute inset-0 opacity-30 [background-image:linear-gradient(to_right,white_1px,transparent_1px),linear-gradient(to_bottom,white_1px,transparent_1px)] [background-size:18px_18px]" />
               </div>
               <div className="-mt-8 px-6 pb-6">
-                <span aria-hidden="true" className="relative grid size-16 place-items-center rounded-full bg-linear-to-br from-primary to-brand-cyan text-xl font-semibold text-primary-foreground ring-4 ring-card">
+                <span aria-hidden="true" className="relative grid size-16 place-items-center avatar-fill rounded-full text-xl font-semibold ring-4 ring-card">
                   {initial}
                 </span>
                 <p className="mt-3 truncate font-semibold">{name}</p>
@@ -101,7 +97,7 @@ export default function AccountPage() {
                   {user.email}
                 </p>
                 <span className={`badge mt-3 ${user.role === "ADMIN" ? "badge-accent" : "badge-muted"}`}>{user.role === "ADMIN" ? "مدیر سایت" : "کاربر"}</span>
-                <button type="button" onClick={logout} className="btn btn-outline btn-danger mt-6 w-full hover:border-destructive/30">
+                <button type="button" onClick={() => void logout()} className="btn btn-outline btn-danger mt-6 w-full hover:border-destructive/30">
                   <LogOut aria-hidden="true" />
                   خروج از حساب
                 </button>

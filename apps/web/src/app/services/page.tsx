@@ -10,7 +10,6 @@ export default async function ServicesPage() {
   const services = await api<Service[]>("/services");
   return (
     <Page
-      eyebrow="خدمات مهندسی"
       title="خدمات شبیه‌سازی و مشاوره"
       description="از مشاوره رایگان پیش از شروع تا انجام کامل پروژه CFD، آموزش خصوصی و پشتیبانی فنی بعد از تحویل. وضعیت هر درخواست در حساب کاربری قابل پیگیری است."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "خدمات" }]}

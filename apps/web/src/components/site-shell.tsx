@@ -36,7 +36,7 @@ const columns = [
     links: [
       { label: "تماس با ما", href: "/contact" },
       { label: "درباره ما", href: "/about" },
-      { label: "حساب کاربری", href: "/account" },
+      { label: "حساب کاربری", href: "/account/profile" },
     ],
   },
 ];
@@ -96,16 +96,19 @@ const socials = [
 export function SiteFooter() {
   const year = new Intl.DateTimeFormat("fa-IR-u-ca-persian", { year: "numeric" }).format(new Date());
   return (
-    <footer className="relative mt-auto overflow-hidden border-t border-border/80 bg-card">
-      <div aria-hidden="true" className="tech-grid absolute inset-0 opacity-50 mask-[linear-gradient(to_bottom,black,transparent_70%)]" />
-      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-linear-to-l from-transparent via-primary/40 to-transparent" />
+    <footer className="relative mt-auto overflow-hidden bg-navy text-navy-foreground">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 opacity-60 [background-image:linear-gradient(to_right,color-mix(in_oklch,var(--brand-cyan)_8%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--brand-cyan)_8%,transparent)_1px,transparent_1px)] [background-size:40px_40px] mask-[linear-gradient(to_bottom,black,transparent_75%)]"
+      />
+      <div aria-hidden="true" className="absolute inset-x-0 top-0 h-px bg-linear-to-l from-transparent via-brand-cyan/40 to-transparent" />
 
       <div className="relative mx-auto max-w-6xl px-4">
-        <div className="grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
+        <div className="grid gap-10 py-14 sm:grid-cols-2 lg:grid-cols-[minmax(0,1.5fr)_repeat(4,minmax(0,1fr))]">
           <div className="max-w-xs sm:col-span-2 lg:col-span-1">
-            <Logo />
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">مرجع آموزش، شبیه‌سازی و خدمات مهندسی CFD و CAE برای دانشجویان و مهندسان.</p>
-            <Link href="/contact" className="mt-4 inline-flex items-center gap-2 text-sm text-muted-foreground transition-colors hover:text-primary">
+            <Logo tone="dark" />
+            <p className="mt-4 text-sm leading-7 text-navy-foreground/65">مرجع آموزش، شبیه‌سازی و خدمات مهندسی CFD و CAE برای دانشجویان و مهندسان.</p>
+            <Link href="/contact" className="mt-4 inline-flex items-center gap-2 text-sm text-navy-foreground/65 transition-colors hover:text-white">
               <Mail className="size-4" aria-hidden="true" />
               ارسال پیام از فرم تماس
             </Link>
@@ -116,7 +119,7 @@ export function SiteFooter() {
                     href={social.href}
                     aria-label={social.label}
                     title={social.label}
-                    className="grid size-9 place-items-center rounded-lg border border-border bg-background text-muted-foreground transition-[color,border-color,background-color,translate] duration-200 hover:-translate-y-0.5 hover:border-primary/30 hover:bg-secondary hover:text-primary"
+                    className="grid size-9 place-items-center rounded-lg border border-white/12 bg-white/5 text-navy-foreground/75 transition-[color,border-color,background-color,translate] duration-200 hover:-translate-y-0.5 hover:border-brand-cyan/40 hover:bg-white/10 hover:text-white"
                   >
                     {social.icon}
                   </a>
@@ -126,11 +129,11 @@ export function SiteFooter() {
           </div>
           {columns.map((column) => (
             <nav key={column.title} aria-label={column.title}>
-              <p className="text-sm font-semibold">{column.title}</p>
+              <p className="text-sm font-semibold text-white">{column.title}</p>
               <ul className="mt-4 grid gap-2.5 text-sm">
                 {column.links.map((link) => (
                   <li key={link.href + link.label}>
-                    <Link href={link.href} className="text-muted-foreground transition-colors hover:text-primary">
+                    <Link href={link.href} className="text-navy-foreground/65 transition-colors hover:text-brand-cyan">
                       {link.label}
                     </Link>
                   </li>
@@ -141,8 +144,8 @@ export function SiteFooter() {
         </div>
       </div>
 
-      <div className="relative border-t border-border/70 bg-muted/40">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-muted-foreground">
+      <div className="relative border-t border-white/10 bg-black/15">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-navy-foreground/55">
           <p>© {year} AeroShop — تمامی حقوق محفوظ است. محصولات دیجیتال هستند و ارسال پستی ندارند.</p>
           <p dir="ltr">Engineering &amp; Simulation</p>
         </div>

@@ -32,7 +32,6 @@ export default function AdminDashboardPage() {
       <div className="relative mb-6 overflow-hidden rounded-xl border border-border/70 bg-linear-to-l from-secondary/70 via-background to-background p-5 md:p-6">
         <div aria-hidden="true" className="tech-grid absolute inset-0 opacity-70 mask-[linear-gradient(to_right,black,transparent_65%)]" />
         <div className="relative">
-          <p className="eyebrow mb-2">پنل مدیریت</p>
           <h1 className="text-2xl font-bold tracking-tight md:text-3xl">داشبورد</h1>
           <p className="mt-1.5 text-sm text-muted-foreground">نمای کلی فروشگاه و درخواست‌ها</p>
         </div>

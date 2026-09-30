@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { AccountNav, StatCard } from "@/components/account/account-nav";
 import { orderStatusLabels } from "@/components/admin/labels";
 import { EmptyState, IconTile, Page } from "@/components/page";
+import { authFetch, useRequireAuth } from "@/components/session-provider";
 import { formatPrice } from "@/lib/format";
 
 type Order = {
@@ -22,25 +23,29 @@ const statusTone: Record<string, string> = {
 };
 
 export default function OrdersPage() {
+  const { status, expired } = useRequireAuth();
   const [orders, setOrders] = useState<Order[] | null>(null);
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      void fetch("/api/v1/orders", { credentials: "include" }).then(async (response) => {
-        setOrders(response.ok ? await response.json() : []);
-      });
-    }, 0);
-    return () => clearTimeout(timer);
-  }, []);
+    if (status !== "authenticated") return;
+    let cancelled = false;
+    void authFetch("/api/v1/orders").then(async (response) => {
+      if (cancelled) return;
+      if (response.status === 401) return expired();
+      setOrders(response.ok ? await response.json() : []);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [status, expired]);
 
   const paid = orders?.filter((order) => order.status === "PAID").length ?? 0;
 
   return (
     <Page
-      eyebrow="حساب کاربری"
       title="سفارش‌های من"
       description="تاریخچه سفارش‌ها و وضعیت پرداخت هر کدام."
-      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "حساب کاربری", href: "/account" }, { label: "سفارش‌ها" }]}
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "داشبورد", href: "/account" }, { label: "سفارش‌ها" }]}
     >
       <AccountNav />
       {orders === null ? (

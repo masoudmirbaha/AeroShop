@@ -14,7 +14,6 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
   const href = slug === "free-consultation" ? "/consultation" : "/request-project";
   return (
     <Page
-      eyebrow="خدمات مهندسی"
       title={service.title}
       description={service.summary}
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "خدمات", href: "/services" }, { label: service.title }]}

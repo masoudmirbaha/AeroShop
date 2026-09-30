@@ -9,7 +9,6 @@ export default async function FaqPage() {
   return (
     <Page
       width="narrow"
-      eyebrow="راهنما"
       title="پرسش‌های متداول"
       description="پاسخ پرسش‌های رایج درباره خرید، دانلود و خدمات. اگر پاسخ خود را پیدا نکردید، با ما تماس بگیرید."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "پرسش‌ها" }]}

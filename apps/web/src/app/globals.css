@@ -42,6 +42,8 @@
   --color-navy: var(--navy);
   --color-navy-foreground: var(--navy-foreground);
   --color-brand-cyan: var(--brand-cyan);
+  --color-page: var(--page);
+  --color-band: var(--band);
   --radius-sm: calc(var(--radius) * 0.6);
   --radius-md: calc(var(--radius) * 0.8);
   --radius-lg: var(--radius);
@@ -52,28 +54,36 @@
 }
 
 :root {
-  /* AeroShop engineering palette: navy, engineering blue, light blue, soft teal. */
-  --navy: oklch(0.24 0.06 262);
-  --navy-foreground: oklch(0.97 0.01 250);
-  --brand-cyan: oklch(0.74 0.11 205);
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.22 0.02 260);
+  /* AeroShop engineering palette: blue-gray navy, muted steel blue, restrained cyan, cool light grays. */
+  --navy: oklch(0.27 0.035 256);
+  --navy-foreground: oklch(0.96 0.008 250);
+  --brand-cyan: oklch(0.73 0.065 212);
+  /* Layered page system: cool page base, tinted bands; cards stay white. */
+  --page: oklch(0.975 0.005 250);
+  --band: oklch(0.953 0.012 250);
+  /* Simulation visuals: dark viewport plus a restrained warm scale for thermal/stress fields. */
+  --sim-bg: oklch(0.26 0.035 256);
+  --sim-bg-2: oklch(0.33 0.045 250);
+  --sim-warm: oklch(0.76 0.09 70);
+  --sim-hot: oklch(0.64 0.12 40);
+  --background: oklch(0.995 0.001 250);
+  --foreground: oklch(0.24 0.02 258);
   --card: oklch(1 0 0);
-  --card-foreground: oklch(0.22 0.02 260);
+  --card-foreground: oklch(0.24 0.02 258);
   --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.22 0.02 260);
-  --primary: oklch(0.5 0.17 256);
+  --popover-foreground: oklch(0.24 0.02 258);
+  --primary: oklch(0.5 0.1 254);
   --primary-foreground: oklch(0.99 0 0);
-  --secondary: oklch(0.96 0.022 245);
-  --secondary-foreground: oklch(0.36 0.12 258);
-  --muted: oklch(0.975 0.004 250);
-  --muted-foreground: oklch(0.52 0.02 258);
-  --accent: oklch(0.955 0.03 195);
-  --accent-foreground: oklch(0.4 0.08 200);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.925 0.008 255);
-  --input: oklch(0.9 0.01 255);
-  --ring: oklch(0.62 0.14 256);
+  --secondary: oklch(0.966 0.01 250);
+  --secondary-foreground: oklch(0.38 0.06 254);
+  --muted: oklch(0.978 0.003 250);
+  --muted-foreground: oklch(0.52 0.018 256);
+  --accent: oklch(0.962 0.015 215);
+  --accent-foreground: oklch(0.42 0.055 218);
+  --destructive: oklch(0.56 0.18 27);
+  --border: oklch(0.925 0.006 255);
+  --input: oklch(0.9 0.008 255);
+  --ring: oklch(0.62 0.08 254);
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
@@ -82,12 +92,12 @@
   --radius: 0.625rem;
   --sidebar: oklch(0.985 0 0);
   --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.5 0.17 256);
+  --sidebar-primary: oklch(0.5 0.1 254);
   --sidebar-primary-foreground: oklch(0.99 0 0);
-  --sidebar-accent: oklch(0.96 0.022 245);
-  --sidebar-accent-foreground: oklch(0.36 0.12 258);
-  --sidebar-border: oklch(0.925 0.008 255);
-  --sidebar-ring: oklch(0.62 0.14 256);
+  --sidebar-accent: oklch(0.966 0.01 250);
+  --sidebar-accent-foreground: oklch(0.38 0.06 254);
+  --sidebar-border: oklch(0.925 0.006 255);
+  --sidebar-ring: oklch(0.62 0.08 254);
 }
 
 .dark {
@@ -129,7 +139,7 @@
     @apply border-border outline-ring/50;
   }
   body {
-    @apply relative isolate bg-muted text-foreground;
+    @apply relative isolate bg-page text-foreground;
   }
   /* Layered engineering backdrop: soft brand tints over a faint measurement grid, fading out below the fold. */
   body::before {
@@ -140,10 +150,10 @@
     z-index: -1;
     pointer-events: none;
     background-image:
-      radial-gradient(56rem 26rem at 88% -8%, color-mix(in oklch, var(--primary) 9%, transparent), transparent 70%),
-      radial-gradient(44rem 24rem at 4% 2%, color-mix(in oklch, var(--brand-cyan) 10%, transparent), transparent 70%),
-      linear-gradient(to right, color-mix(in oklch, var(--navy) 5%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklch, var(--navy) 5%, transparent) 1px, transparent 1px);
+      radial-gradient(56rem 26rem at 88% -8%, color-mix(in oklch, var(--primary) 6%, transparent), transparent 70%),
+      radial-gradient(44rem 24rem at 4% 2%, color-mix(in oklch, var(--brand-cyan) 6%, transparent), transparent 70%),
+      linear-gradient(to right, color-mix(in oklch, var(--navy) 4%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--navy) 4%, transparent) 1px, transparent 1px);
     background-size: auto, auto, 36px 36px, 36px 36px;
     mask-image: linear-gradient(to bottom, black 30%, transparent);
   }
@@ -222,13 +232,80 @@
 
   /* Full-width tinted band used to separate homepage sections. */
   .section-band {
-    @apply border-y border-border/70 bg-linear-to-b from-background/80 via-secondary/30 to-background/60;
+    @apply relative border-y border-border/60 bg-band;
+  }
+  .section-band::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    background-image:
+      linear-gradient(to right, color-mix(in oklch, var(--navy) 3.5%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--navy) 3.5%, transparent) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(to bottom, black, transparent 80%);
+  }
+  .section-band > * {
+    position: relative;
+  }
+  /* Soft transition band directly under the dark hero. */
+  .section-lead {
+    @apply bg-linear-to-b from-band to-page;
   }
   .divider-fade {
     @apply h-px w-full bg-linear-to-l from-transparent via-border to-transparent;
   }
   .card-glow {
-    @apply transition-[border-color,box-shadow,translate] duration-300 hover:-translate-y-1 hover:border-primary/30 hover:shadow-[0_0_0_4px_color-mix(in_oklch,var(--primary)_6%,transparent),0_18px_40px_-20px_color-mix(in_oklch,var(--primary)_45%,transparent)] motion-reduce:hover:translate-y-0;
+    @apply transition-[border-color,box-shadow,translate] duration-300 hover:-translate-y-1 hover:border-primary/25 hover:shadow-[0_0_0_3px_color-mix(in_oklch,var(--primary)_5%,transparent),0_16px_36px_-22px_color-mix(in_oklch,var(--navy)_40%,transparent)] motion-reduce:hover:translate-y-0;
+  }
+  /* Solid accent used for indicators and small rules, instead of per-component gradients. */
+  .accent-line {
+    @apply bg-primary;
+  }
+  .avatar-fill {
+    @apply bg-linear-to-br from-primary to-navy text-primary-foreground;
+  }
+
+  /* 3D flip card: state lives in data-flipped so hover, tap and keyboard share one source of truth. */
+  .flip-card {
+    perspective: 1600px;
+  }
+  .flip-card-inner {
+    position: relative;
+    height: 100%;
+    transform-style: preserve-3d;
+    transition: transform 620ms cubic-bezier(0.3, 0.7, 0.2, 1);
+  }
+  .flip-card[data-flipped="true"] .flip-card-inner {
+    transform: rotateY(180deg);
+  }
+  .flip-card-face {
+    position: absolute;
+    inset: 0;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transform: translateZ(0);
+  }
+  .flip-card-back {
+    transform: rotateY(180deg) translateZ(0);
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flip-card-inner,
+    .flip-card[data-flipped="true"] .flip-card-inner {
+      transform: none;
+      transition: none;
+    }
+    .flip-card-face {
+      transform: none;
+      transition: opacity 180ms linear;
+    }
+    .flip-card-back,
+    .flip-card[data-flipped="true"] .flip-card-front {
+      opacity: 0;
+    }
+    .flip-card[data-flipped="true"] .flip-card-back {
+      opacity: 1;
+    }
   }
 
   .surface {
@@ -239,8 +316,8 @@
   }
   .tech-grid {
     background-image:
-      linear-gradient(to right, color-mix(in oklch, var(--primary) 10%, transparent) 1px, transparent 1px),
-      linear-gradient(to bottom, color-mix(in oklch, var(--primary) 10%, transparent) 1px, transparent 1px);
+      linear-gradient(to right, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px),
+      linear-gradient(to bottom, color-mix(in oklch, var(--primary) 7%, transparent) 1px, transparent 1px);
     background-size: 20px 20px;
   }
 
@@ -248,7 +325,7 @@
     @apply inline-flex h-10 shrink-0 items-center justify-center gap-2 rounded-lg border border-transparent px-4 text-sm font-medium whitespace-nowrap transition-[background-color,border-color,color,box-shadow] duration-150 outline-none select-none focus-visible:ring-3 focus-visible:ring-ring/50 disabled:pointer-events-none disabled:opacity-50 [&_svg]:size-4 [&_svg]:shrink-0;
   }
   .btn-primary {
-    @apply bg-primary text-primary-foreground shadow-sm shadow-primary/25 hover:bg-primary/90;
+    @apply bg-primary text-primary-foreground shadow-sm shadow-navy/15 hover:bg-primary/90;
   }
   .btn-outline {
     @apply border-border bg-card text-foreground hover:border-primary/30 hover:bg-secondary/60 hover:text-primary;
@@ -287,9 +364,6 @@
   }
   .chip {
     @apply inline-flex items-center rounded-full border border-border bg-card px-3.5 py-1.5 text-sm text-foreground/80 transition-colors hover:border-primary/30 hover:bg-secondary/60 hover:text-primary;
-  }
-  .eyebrow {
-    @apply inline-flex items-center gap-2 text-xs font-semibold tracking-wide text-primary before:h-px before:w-5 before:bg-linear-to-l before:from-primary before:to-brand-cyan;
   }
   .admin-content :where(div:has(> table)) {
     @apply rounded-xl border border-border/80 bg-card;

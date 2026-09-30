@@ -26,7 +26,6 @@ export default function ContactPage() {
 
   return (
     <Page
-      eyebrow="ارتباط با ما"
       title="تماس با ما"
       description="پرسش، پیشنهاد یا درخواست همکاری را بفرستید؛ پیام شما مستقیم به تیم AeroShop می‌رسد."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "تماس" }]}

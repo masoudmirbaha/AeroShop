@@ -2,11 +2,9 @@
 
 import { BadgeCheck, Mail, ShieldCheck, UserRound, type LucideIcon } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect } from "react";
 import { AccountNav } from "@/components/account/account-nav";
 import { IconTile, Page } from "@/components/page";
-import { useSession } from "@/components/session-provider";
+import { useRequireAuth } from "@/components/session-provider";
 
 function Field({ icon, label, value, ltr }: { icon: LucideIcon; label: string; value: string; ltr?: boolean }) {
   return (
@@ -23,22 +21,16 @@ function Field({ icon, label, value, ltr }: { icon: LucideIcon; label: string; v
 }
 
 export default function ProfilePage() {
-  const router = useRouter();
-  const { status, user } = useSession();
-
-  useEffect(() => {
-    if (status === "anonymous") router.push("/login");
-  }, [status, router]);
+  const { user } = useRequireAuth();
 
   const name = user ? `${user.firstName} ${user.lastName}`.trim() || user.email : "";
   const initial = user ? (user.firstName || user.email).charAt(0).toUpperCase() : "";
 
   return (
     <Page
-      eyebrow="حساب کاربری"
       title="پروفایل"
       description="اطلاعات حساب شما در AeroShop."
-      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "حساب کاربری", href: "/account" }, { label: "پروفایل" }]}
+      breadcrumbs={[{ label: "خانه", href: "/" }, { label: "داشبورد", href: "/account" }, { label: "پروفایل" }]}
     >
       <AccountNav />
       {!user ? (
@@ -49,7 +41,7 @@ export default function ProfilePage() {
       ) : (
         <div className="grid items-start gap-6 lg:grid-cols-[18rem_minmax(0,1fr)]">
           <aside className="surface flex flex-col items-center p-6 text-center">
-            <span aria-hidden="true" className="grid size-20 place-items-center rounded-full bg-linear-to-br from-primary to-brand-cyan text-2xl font-semibold text-primary-foreground shadow-lg shadow-primary/20">
+            <span aria-hidden="true" className="grid size-20 place-items-center avatar-fill rounded-full text-2xl font-semibold shadow-lg shadow-navy/15">
               {initial}
             </span>
             <p className="mt-4 font-semibold">{name}</p>

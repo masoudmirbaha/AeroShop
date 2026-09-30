@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 
 export type SessionUser = {
   id: string;
@@ -24,13 +24,29 @@ type SessionContextValue = {
 
 const SessionContext = createContext<SessionContextValue | null>(null);
 
+let pendingRefresh: Promise<boolean> | null = null;
+
+// Parallel 401s share one refresh call so a rotated refresh token is never replayed.
+function refreshTokens() {
+  pendingRefresh ??= fetch("/api/v1/auth/refresh", { method: "POST", credentials: "include" })
+    .then((response) => response.ok)
+    .catch(() => false)
+    .finally(() => {
+      pendingRefresh = null;
+    });
+  return pendingRefresh;
+}
+
+/** Same-origin API fetch that renews an expired access token once before giving up. */
+export async function authFetch(input: string, init: RequestInit = {}) {
+  const send = () => fetch(input, { ...init, credentials: "include" });
+  const response = await send();
+  if (response.status !== 401 || !(await refreshTokens())) return response;
+  return send();
+}
+
 async function fetchMe() {
-  let response = await fetch("/api/v1/auth/me", { credentials: "include" });
-  if (response.status === 401) {
-    const refreshed = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "include" });
-    if (!refreshed.ok) return null;
-    response = await fetch("/api/v1/auth/me", { credentials: "include" });
-  }
+  const response = await authFetch("/api/v1/auth/me");
   if (!response.ok) return null;
   const body = (await response.json()) as { user: SessionUser };
   return body.user;
@@ -99,4 +115,27 @@ export function useSession() {
   const context = useContext(SessionContext);
   if (!context) throw new Error("useSession must be used inside SessionProvider");
   return context;
+}
+
+/**
+ * Guards a signed-in page: anonymous visitors go to /login. Logging out from the page is left to
+ * `logout`, which navigates home. Call `expired` when an API request still returns 401.
+ */
+export function useRequireAuth() {
+  const router = useRouter();
+  const session = useSession();
+  const { status, refresh } = session;
+  const signedIn = useRef(false);
+
+  useEffect(() => {
+    if (status === "authenticated") signedIn.current = true;
+    else if (status === "anonymous" && !signedIn.current) router.replace("/login");
+  }, [status, router]);
+
+  const expired = useCallback(() => {
+    router.replace("/login");
+    void refresh();
+  }, [router, refresh]);
+
+  return { ...session, expired };
 }

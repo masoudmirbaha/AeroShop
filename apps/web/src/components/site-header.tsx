@@ -1,7 +1,7 @@
 "use client";
 
 import { Menu } from "@base-ui/react/menu";
-import { ChevronDown, Download, LayoutDashboard, LogOut, Menu as MenuIcon, Package, Search, ShoppingCart, UserRound, X } from "lucide-react";
+import { ChevronDown, Download, Gauge, GraduationCap, LayoutDashboard, LogOut, Menu as MenuIcon, Package, Search, ShoppingCart, UserRound, X } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useLayoutEffect, useRef, useState, type ComponentType } from "react";
@@ -9,9 +9,9 @@ import { useSession, type SessionUser } from "@/components/session-provider";
 
 const focusRing = "outline-none focus-visible:ring-3 focus-visible:ring-ring/50";
 
-const navItems = [
-  { label: "محصولات", href: "/products", match: ["/products", "/categories"] },
-  { label: "دوره‌ها", href: "/courses", match: ["/courses"] },
+const navItems: { label: string; href: string; match: string[]; icon?: ComponentType<{ className?: string }> }[] = [
+  { label: "محصولات", href: "/products", match: ["/products", "/categories"], icon: Package },
+  { label: "دوره‌ها", href: "/courses", match: ["/courses"], icon: GraduationCap },
   { label: "خدمات", href: "/services", match: ["/services", "/request-project", "/consultation"] },
   { label: "درباره ما", href: "/about", match: ["/about"] },
   { label: "پرسش‌ها", href: "/faq", match: ["/faq"] },
@@ -19,10 +19,11 @@ const navItems = [
 ];
 
 const accountLinks: { label: string; href: string; icon: ComponentType<{ className?: string }>; adminOnly?: boolean }[] = [
-  { label: "مدیریت", href: "/admin", icon: LayoutDashboard, adminOnly: true },
-  { label: "حساب کاربری", href: "/account", icon: UserRound },
+  { label: "پروفایل", href: "/account/profile", icon: UserRound },
+  { label: "داشبورد", href: "/account", icon: Gauge },
   { label: "سفارش‌های من", href: "/account/orders", icon: Package },
   { label: "دانلودهای من", href: "/account/downloads", icon: Download },
+  { label: "مدیریت", href: "/admin", icon: LayoutDashboard, adminOnly: true },
 ];
 
 function isActive(pathname: string, match: string[]) {
@@ -164,10 +165,11 @@ function DesktopNav({ pathname }: { pathname: string }) {
             href={item.href}
             data-nav-link
             aria-current={active ? "page" : undefined}
-            className={`relative whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium tracking-tight xl:px-3 transition-colors duration-200 ${focusRing} ${
+            className={`group/nav relative inline-flex items-center gap-1.5 whitespace-nowrap rounded-md px-2.5 py-1.5 text-sm font-medium tracking-tight xl:px-3 transition-colors duration-200 ${focusRing} ${
               active ? "text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
+            {item.icon ? <item.icon className={`size-3.5 transition-opacity ${active ? "opacity-90" : "opacity-60 group-hover/nav:opacity-90"}`} aria-hidden="true" /> : null}
             {item.label}
           </Link>
         );
@@ -175,13 +177,14 @@ function DesktopNav({ pathname }: { pathname: string }) {
       <span
         ref={indicatorRef}
         aria-hidden="true"
-        className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-0 rounded-full bg-linear-to-l from-primary to-brand-cyan opacity-0 shadow-[0_0_8px] shadow-primary/40 transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
+        className="pointer-events-none absolute bottom-0 left-0 h-0.5 w-0 accent-line rounded-full opacity-0 transition-[transform,width,opacity] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] motion-reduce:transition-none"
       />
     </nav>
   );
 }
 
-export function Logo() {
+export function Logo({ tone = "light" }: { tone?: "light" | "dark" }) {
+  const dark = tone === "dark";
   return (
     <Link href="/" aria-label="AeroShop، صفحه اصلی" className={`flex shrink-0 items-center gap-2.5 rounded-lg ${focusRing}`}>
       <span className="grid size-9 place-items-center rounded-lg bg-linear-to-br from-navy to-primary shadow-sm">
@@ -192,10 +195,10 @@ export function Logo() {
         </svg>
       </span>
       <span dir="ltr" className="flex flex-col leading-none">
-        <span className="text-lg font-bold tracking-tight text-foreground">
-          Aero<span className="text-primary">Shop</span>
+        <span className={`text-lg font-bold tracking-tight ${dark ? "text-white" : "text-foreground"}`}>
+          Aero<span className={dark ? "text-brand-cyan" : "text-primary"}>Shop</span>
         </span>
-        <span className="mt-1 hidden text-[10px] font-medium tracking-[0.14em] text-muted-foreground uppercase sm:block">
+        <span className={`mt-1 hidden text-[10px] font-medium tracking-[0.14em] uppercase sm:block ${dark ? "text-navy-foreground/60" : "text-muted-foreground"}`}>
           Engineering &amp; Simulation
         </span>
       </span>
@@ -256,7 +259,7 @@ function CartLink({ active }: { active: boolean }) {
 function Avatar({ user, size = "size-8" }: { user: SessionUser; size?: string }) {
   const initial = (user.firstName || user.email).trim().charAt(0).toUpperCase();
   return (
-    <span aria-hidden="true" className={`grid ${size} shrink-0 place-items-center rounded-full bg-linear-to-br from-primary to-brand-cyan text-sm font-semibold text-primary-foreground`}>
+    <span aria-hidden="true" className={`grid ${size} shrink-0 place-items-center avatar-fill rounded-full text-sm font-semibold`}>
       {initial}
     </span>
   );
@@ -383,6 +386,7 @@ function MobileMenu({ pathname, onClose }: { pathname: string; onClose: () => vo
                     : "text-foreground/80 hover:bg-muted hover:text-foreground"
                 }`}
               >
+                {item.icon ? <item.icon className="size-4 opacity-70" aria-hidden="true" /> : null}
                 {item.label}
               </Link>
             );

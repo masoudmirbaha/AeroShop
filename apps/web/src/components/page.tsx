@@ -16,7 +16,6 @@ type Width = keyof typeof widths;
 type PageHeaderProps = {
   title: ReactNode;
   description?: ReactNode;
-  eyebrow?: string;
   breadcrumbs?: Crumb[];
   actions?: ReactNode;
   width?: Width;
@@ -31,16 +30,34 @@ export function Page({ children, width = "default", ...header }: PageHeaderProps
   );
 }
 
-export function PageHeader({ title, description, eyebrow, breadcrumbs, actions, width = "default" }: PageHeaderProps) {
+export function PageHeader({ title, description, breadcrumbs, actions, width = "default" }: PageHeaderProps) {
   return (
-    <header className="border-b border-border/70 bg-linear-to-b from-background/70 to-background/20">
-      <div className={cn("mx-auto w-full px-4 py-8 md:py-10", widths[width])}>
+    <header className="relative isolate overflow-hidden bg-linear-to-b from-band via-band/80 to-page">
+      <div
+        aria-hidden="true"
+        className="absolute inset-0 -z-10 [background-image:linear-gradient(to_right,color-mix(in_oklch,var(--navy)_5%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--navy)_5%,transparent)_1px,transparent_1px)] [background-size:32px_32px] mask-[radial-gradient(ellipse_70%_120%_at_15%_0%,black,transparent_75%)]"
+      />
+      <div aria-hidden="true" className="absolute -top-24 end-[-6rem] -z-10 size-80 rounded-full bg-brand-cyan/10 blur-3xl" />
+      <svg
+        aria-hidden="true"
+        viewBox="0 0 480 200"
+        preserveAspectRatio="none"
+        className="absolute inset-y-0 end-0 -z-10 hidden h-full w-[34rem] text-primary mask-[linear-gradient(to_right,black,transparent)] md:block"
+      >
+        {[40, 62, 84, 106, 128, 150, 172].map((y, index) => (
+          <path key={y} d={`M480 ${y} C 360 ${y - 22 + index * 4}, 240 ${y + 18 - index * 3}, 0 ${y - 8}`} fill="none" stroke="currentColor" strokeWidth="1" opacity={0.08 + (index % 3) * 0.05} />
+        ))}
+      </svg>
+      <div className={cn("mx-auto w-full px-4 pt-8 pb-9 md:pt-10 md:pb-12", widths[width])}>
         {breadcrumbs?.length ? <Breadcrumbs items={breadcrumbs} /> : null}
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div className="min-w-0 max-w-2xl">
-            {eyebrow ? <p className="eyebrow mb-3">{eyebrow}</p> : null}
             <h1 className="text-2xl leading-tight font-bold tracking-tight text-foreground md:text-3xl">{title}</h1>
             {description ? <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base md:leading-8">{description}</p> : null}
+            <span aria-hidden="true" className="mt-5 flex items-center gap-1.5">
+              <span className="accent-line h-0.5 w-10 rounded-full" />
+              <span className="h-0.5 w-3 rounded-full bg-brand-cyan/70" />
+            </span>
           </div>
           {actions ? <div className="flex flex-wrap items-center gap-2">{actions}</div> : null}
         </div>
@@ -75,14 +92,12 @@ function Breadcrumbs({ items }: { items: Crumb[] }) {
 export function Section({
   title,
   description,
-  eyebrow,
   action,
   children,
   className,
 }: {
   title?: ReactNode;
   description?: ReactNode;
-  eyebrow?: string;
   action?: ReactNode;
   children: ReactNode;
   className?: string;
@@ -92,7 +107,6 @@ export function Section({
       {title ? (
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
           <div className="min-w-0">
-            {eyebrow ? <p className="eyebrow mb-2">{eyebrow}</p> : null}
             <h2 className="text-xl font-bold tracking-tight md:text-2xl">{title}</h2>
             {description ? <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{description}</p> : null}
           </div>
@@ -127,7 +141,7 @@ export function AuthShell({ title, description, children, footer }: { title: str
     <main className="flex flex-1 items-center justify-center px-4 py-12 md:py-20">
       <div className="w-full max-w-md">
         <div className="surface p-6 shadow-[0_18px_40px_-24px] shadow-navy/25 sm:p-8">
-          <span aria-hidden="true" className="mb-5 block h-1 w-12 rounded-full bg-linear-to-l from-primary to-brand-cyan" />
+          <span aria-hidden="true" className="accent-line mb-5 block h-1 w-12 rounded-full" />
           <h1 className="text-2xl font-bold tracking-tight">{title}</h1>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">{description}</p>
           <div className="mt-6">{children}</div>

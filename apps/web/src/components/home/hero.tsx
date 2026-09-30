@@ -18,7 +18,7 @@ const floating: { label: string; icon: LucideIcon; className: string; delay: str
 ];
 
 const gridLines =
-  "[background-image:linear-gradient(to_right,color-mix(in_oklch,var(--brand-cyan)_14%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--brand-cyan)_14%,transparent)_1px,transparent_1px)]";
+  "[background-image:linear-gradient(to_right,color-mix(in_oklch,var(--brand-cyan)_10%,transparent)_1px,transparent_1px),linear-gradient(to_bottom,color-mix(in_oklch,var(--brand-cyan)_10%,transparent)_1px,transparent_1px)]";
 
 function delay(value: string) {
   return { "--delay": value } as CSSProperties;
@@ -27,20 +27,16 @@ function delay(value: string) {
 export function HomeHero() {
   return (
     <section className="relative isolate overflow-hidden bg-navy text-navy-foreground">
-      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-bl from-navy via-navy to-primary/70" />
+      <div aria-hidden="true" className="absolute inset-0 -z-10 bg-linear-to-bl from-navy via-navy to-primary/35" />
       <div aria-hidden="true" className={`absolute inset-0 -z-10 ${gridLines} [background-size:40px_40px] mask-[radial-gradient(ellipse_80%_70%_at_50%_40%,black,transparent)]`} />
-      <div aria-hidden="true" className="animate-glow absolute -top-40 end-[-10%] -z-10 size-[36rem] rounded-full bg-primary/40 blur-3xl" />
-      <div aria-hidden="true" className="animate-glow absolute -bottom-48 start-[-8%] -z-10 size-[30rem] rounded-full bg-brand-cyan/25 blur-3xl [animation-delay:2s]" />
+      <div aria-hidden="true" className="animate-glow absolute -top-40 end-[-10%] -z-10 size-[32rem] rounded-full bg-primary/20 blur-3xl" />
+      <div aria-hidden="true" className="animate-glow absolute -bottom-48 start-[-8%] -z-10 size-[26rem] rounded-full bg-brand-cyan/10 blur-3xl [animation-delay:2s]" />
 
       <div className="mx-auto grid w-full max-w-6xl items-center gap-14 px-4 pt-16 pb-20 md:pt-24 md:pb-28 lg:grid-cols-[minmax(0,1.15fr)_minmax(0,0.85fr)]">
         <div>
-          <p className="animate-fade-up inline-flex items-center gap-2 rounded-full bg-white/8 px-3 py-1 text-xs font-medium text-brand-cyan ring-1 ring-white/12 backdrop-blur">
-            <span className="size-1.5 rounded-full bg-brand-cyan" aria-hidden="true" />
-            Engineering &amp; Simulation
-          </p>
-          <h1 className="animate-fade-up mt-6 text-3xl leading-[1.35] font-bold tracking-tight text-white md:text-5xl md:leading-[1.3]" style={delay("0.08s")}>
+          <h1 className="animate-fade-up text-3xl leading-[1.35] font-bold tracking-tight text-white md:text-5xl md:leading-[1.3]" style={delay("0.08s")}>
             مرجع آموزش، شبیه‌سازی و خدمات مهندسی{" "}
-            <span className="bg-linear-to-l from-brand-cyan to-white bg-clip-text text-transparent">CFD و CAE</span>
+            <span className="text-brand-cyan">CFD و CAE</span>
           </h1>
           <p className="animate-fade-up mt-5 max-w-xl text-base leading-8 text-navy-foreground/75 md:text-lg" style={delay("0.16s")}>
             محصولات آموزشی، دوره‌های تخصصی، مشاوره و انجام پروژه‌های مهندسی

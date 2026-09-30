@@ -1,9 +1,11 @@
-import { BadgeCheck, Clock, Download, PlayCircle, ShieldCheck } from "lucide-react";
+import { BadgeCheck, BookOpen, Clock, Download, FileText, FolderOpen, Gauge, Layers, ListTree, PlayCircle, ShieldCheck, type LucideIcon } from "lucide-react";
+import { permanentRedirect } from "next/navigation";
 import { AddToCart } from "@/components/add-to-cart";
 import { Card, Page, Section, type Crumb } from "@/components/page";
-import { PriceTag, ProductCardView, ProductVisual } from "@/components/product-card";
-import { api, type ProductCard } from "@/lib/api";
-import { typeLabel } from "@/lib/format";
+import { PriceTag, ProductCardView, ProductVisual, productHref } from "@/components/product-card";
+import { ProductGrid } from "@/components/product-grid";
+import { api, outlineOf, type ProductCard } from "@/lib/api";
+import { formatMinutes, typeLabel } from "@/lib/format";
 
 type Detail = ProductCard & {
   description: string;
@@ -19,18 +21,51 @@ const perks = [
   { icon: BadgeCheck, text: "محصول دیجیتال، بدون ارسال پستی" },
 ];
 
-export async function ProductDetail({ slug }: { slug: string }) {
+function Fact({ icon: Icon, label, value }: { icon: LucideIcon; label: string; value: string }) {
+  return (
+    <li className="flex items-center justify-between gap-3 py-2">
+      <span className="flex items-center gap-2 text-muted-foreground">
+        <Icon className="size-4 shrink-0 text-primary/70" aria-hidden="true" />
+        {label}
+      </span>
+      <span className="truncate font-medium text-foreground/90">{value}</span>
+    </li>
+  );
+}
+
+function facts(product: Detail): { icon: LucideIcon; label: string; value: string }[] {
+  const count = (value: number, unit: string) => `${value.toLocaleString("fa-IR")} ${unit}`;
+  if (product.type === "COURSE") {
+    const outline = outlineOf(product);
+    return [
+      ...(outline ? [{ icon: ListTree, label: "فصل‌ها", value: count(outline.sections, "فصل") }, { icon: BookOpen, label: "درس‌ها", value: count(outline.lessons, "درس") }] : []),
+      ...(outline?.minutes ? [{ icon: Clock, label: "مدت دوره", value: formatMinutes(outline.minutes) }] : []),
+      ...(product.level ? [{ icon: Gauge, label: "سطح", value: typeLabel(product.level) }] : []),
+    ];
+  }
+  return [
+    { icon: product.type === "BUNDLE" ? Layers : FileText, label: "نوع", value: product.type === "BUNDLE" ? "بسته‌ی آموزشی" : product.type === "FREE" ? "محصول رایگان" : "آموزش تک‌موضوعی" },
+    ...(product.category ? [{ icon: FolderOpen, label: "دسته‌بندی", value: product.category.name }] : []),
+    ...(product.bundleItems.length ? [{ icon: Layers, label: "محتوای بسته", value: count(product.bundleItems.length, "محصول") }] : []),
+    ...(product.files.length ? [{ icon: Download, label: "فایل‌ها", value: count(product.files.length, "فایل") }] : []),
+    ...(product.level ? [{ icon: Gauge, label: "سطح", value: typeLabel(product.level) }] : []),
+  ];
+}
+
+export async function ProductDetail({ slug, section }: { slug: string; section: "products" | "courses" }) {
   const product = await api<Detail>(`/products/${slug}`);
   const isCourse = product.type === "COURSE";
+  if (isCourse !== (section === "courses")) permanentRedirect(productHref(product));
   const breadcrumbs: Crumb[] = [
     { label: "خانه", href: "/" },
     isCourse ? { label: "دوره‌ها", href: "/courses" } : { label: "محصولات", href: "/products" },
     ...(product.category && !isCourse ? [{ label: product.category.name, href: `/categories/${product.category.slug}` }] : []),
     { label: product.title },
   ];
-  const lessonCount = product.sections.reduce((sum, section) => sum + section.lessons.length, 0);
+  const lessonCount = product.sections.reduce((sum, item) => sum + item.lessons.length, 0);
+  const details = facts(product);
   return (
-    <Page eyebrow={product.topic?.name ?? typeLabel(product.type)} title={product.title} description={product.summary} breadcrumbs={breadcrumbs}>
+    <Page title={product.title} description={product.summary} breadcrumbs={breadcrumbs}>
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="grid min-w-0 gap-8">
           <Card className="p-6 md:p-8">
@@ -89,12 +124,11 @@ export async function ProductDetail({ slug }: { slug: string }) {
         </div>
 
         <aside className="lg:sticky lg:top-24">
-          <div className="surface p-3">
-            <ProductVisual product={product} className="h-36" />
-            <div className="px-2 pt-4 pb-2">
+          <div className="surface overflow-hidden p-0">
+            <ProductVisual product={product} className="aspect-[16/10]" sizes="(min-width: 1024px) 360px, 100vw" />
+            <div className="px-5 pt-4 pb-5">
               <div className="flex flex-wrap gap-1.5">
-                <span className="badge">{typeLabel(product.type)}</span>
-                {product.level ? <span className="badge badge-muted">{typeLabel(product.level)}</span> : null}
+                <span className="badge">{isCourse ? "دوره‌ی آموزشی" : typeLabel(product.type)}</span>
               </div>
               <div className="mt-4">
                 <PriceTag price={product.price} comparePrice={product.comparePrice} size="lg" />
@@ -102,6 +136,13 @@ export async function ProductDetail({ slug }: { slug: string }) {
               <div className="mt-4">
                 <AddToCart productId={product.id} />
               </div>
+              {details.length ? (
+                <ul aria-label={isCourse ? "مشخصات دوره" : "مشخصات محصول"} className="mt-5 divide-y divide-border/60 border-t border-border/70 text-sm">
+                  {details.map((fact) => (
+                    <Fact key={fact.label} {...fact} />
+                  ))}
+                </ul>
+              ) : null}
               <ul className="mt-5 grid gap-2.5 border-t border-border/70 pt-4 text-sm text-muted-foreground">
                 {perks.map(({ icon: Icon, text }) => (
                   <li key={text} className="flex items-center gap-2.5">
@@ -116,12 +157,8 @@ export async function ProductDetail({ slug }: { slug: string }) {
       </div>
 
       {product.related.length ? (
-        <Section title="محصولات مرتبط" className="mt-14">
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            {product.related.map((item) => (
-              <ProductCardView key={item.id} product={item} />
-            ))}
-          </div>
+        <Section title="مطالب مرتبط" className="mt-14">
+          <ProductGrid items={product.related} />
         </Section>
       ) : null}
     </Page>

@@ -11,7 +11,6 @@ const pillars = [
 export default function AboutPage() {
   return (
     <Page
-      eyebrow="درباره ما"
       title="درباره AeroShop"
       description="AeroShop برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "درباره ما" }]}
