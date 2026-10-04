@@ -4,6 +4,7 @@ import {
   ExceptionFilter,
   HttpException,
   HttpStatus,
+  Logger,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { Prisma } from '../generated/prisma/client.js';
@@ -19,6 +20,8 @@ const PRISMA_ERRORS: Record<string, { status: number; message: string }> = {
 
 @Catch()
 export class HttpExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger('ExceptionFilter');
+
   catch(exception: unknown, host: ArgumentsHost) {
     const response = host.switchToHttp().getResponse<Response>();
 
@@ -41,6 +44,10 @@ export class HttpExceptionFilter implements ExceptionFilter {
       }
     }
 
+    this.logger.error(
+      exception instanceof Error ? exception.message : 'Non-error exception thrown',
+      exception instanceof Error ? exception.stack : undefined,
+    );
     response.status(HttpStatus.INTERNAL_SERVER_ERROR).json({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       message: 'خطای داخلی سرور',

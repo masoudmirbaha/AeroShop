@@ -1,0 +1,87 @@
+# Production stack: postgres + one-off migrations + api + web.
+#   cp .env.production.example .env.production   # then fill in real values
+#   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
+# Only the web app is published; api and postgres stay on the internal network.
+# Put a TLS-terminating reverse proxy in front of the web port.
+
+name: aeroshop-prod
+
+x-node-image: &node-image
+  NODE_IMAGE: ${NODE_IMAGE:-docker.arvancloud.ir/library/node:24-alpine}
+
+x-database-url: &database-url
+  DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aeroshop}
+
+services:
+  postgres:
+    image: docker.arvancloud.ir/library/postgres:17-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-aeroshop}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  migrate:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: migrate
+      args: *node-image
+    environment:
+      <<: *database-url
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+      target: runner
+      args: *node-image
+    restart: unless-stopped
+    init: true
+    environment:
+      <<: *database-url
+      NODE_ENV: production
+      PORT: 4000
+      WEB_URL: ${WEB_URL:?Set WEB_URL to the public site origin}
+      JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET}
+      JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+    volumes:
+      - storage:/app/storage
+    depends_on:
+      postgres:
+        condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile
+      target: runner
+      args:
+        <<: *node-image
+        API_URL: http://api:4000
+    restart: unless-stopped
+    init: true
+    environment:
+      API_URL: http://api:4000
+    ports:
+      - "${WEB_PORT:-3000}:3000"
+    depends_on:
+      api:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  storage:
