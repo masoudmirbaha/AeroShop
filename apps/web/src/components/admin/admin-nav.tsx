@@ -1,8 +1,10 @@
 "use client";
 
-import { FolderTree, HelpCircle, Inbox, LayoutDashboard, Mail, Package, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import { FolderTree, HelpCircle, Inbox, LayoutDashboard, LogOut, Mail, Package, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
+import { useState } from "react";
+import { useSession } from "@/components/session-provider";
 
 const sections = [
   { label: "داشبورد", href: "/admin", icon: LayoutDashboard },
@@ -17,6 +19,18 @@ const sections = [
 
 export function AdminNav() {
   const pathname = usePathname();
+  const router = useRouter();
+  const session = useSession();
+  const [signingOut, setSigningOut] = useState(false);
+
+  // Reuses the API logout endpoint, then syncs the shared session so the site header updates too.
+  async function signOut() {
+    setSigningOut(true);
+    await fetch("/api/v1/auth/logout", { method: "POST", credentials: "include" }).catch(() => undefined);
+    await session.refresh();
+    router.replace("/admin/login");
+  }
+
   return (
     <nav aria-label="منوی مدیریت" className="surface overflow-hidden p-2 md:sticky md:top-24">
       <div className="relative mb-2 hidden overflow-hidden rounded-xl bg-navy p-4 text-navy-foreground md:block">
@@ -57,6 +71,17 @@ export function AdminNav() {
           );
         })}
       </ul>
+      <div className="mt-1 border-t border-border/70 pt-1">
+        <button
+          type="button"
+          onClick={signOut}
+          disabled={signingOut}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2 text-sm font-medium whitespace-nowrap text-foreground/75 transition-colors duration-200 outline-none hover:bg-muted hover:text-foreground focus-visible:ring-3 focus-visible:ring-ring/50 disabled:opacity-60"
+        >
+          <LogOut className="size-4 shrink-0 text-muted-foreground" aria-hidden="true" />
+          {signingOut ? "در حال خروج..." : "خروج"}
+        </button>
+      </div>
     </nav>
   );
 }
