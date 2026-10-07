@@ -10,6 +10,8 @@ const optionalId = z.string().min(1).nullable().optional();
 const money = z.number().int().nonnegative();
 const productType = z.enum(['SINGLE_PRODUCT', 'BUNDLE', 'COURSE', 'FREE']);
 
+const sortOrder = z.number().int().min(0).max(10000);
+
 const productFields = z.object({
   type: productType,
   title: z.string().trim().min(2).max(160),
@@ -23,10 +25,12 @@ const productFields = z.object({
   topicId: optionalId,
   isPublished: z.boolean(),
   isFeatured: z.boolean(),
+  sortOrder,
 });
 export const productInputSchema = productFields.extend({
   isPublished: z.boolean().default(false),
   isFeatured: z.boolean().default(false),
+  sortOrder: sortOrder.default(0),
 });
 export const productUpdateSchema = productFields.partial();
 

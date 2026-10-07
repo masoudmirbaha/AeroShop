@@ -36,7 +36,7 @@ export class AdminCatalogService {
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({
         where,
-        orderBy: { updatedAt: 'desc' },
+        orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
         skip: (query.page - 1) * query.pageSize,
         take: query.pageSize,
         include: { category: true, topic: true },
@@ -51,6 +51,7 @@ export class AdminCatalogService {
         price: toman(product.price),
         isPublished: product.isPublished,
         isFeatured: product.isFeatured,
+        sortOrder: product.sortOrder,
         category: product.category?.name ?? null,
         topic: product.topic?.name ?? null,
         updatedAt: product.updatedAt,

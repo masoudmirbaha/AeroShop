@@ -20,7 +20,7 @@ export class CategoriesService {
         children: { orderBy: { name: 'asc' } },
         products: {
           where: { isPublished: true },
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
           include: { category: true, topic: true, images: { orderBy: { sortOrder: 'asc' } } },
         },
       },

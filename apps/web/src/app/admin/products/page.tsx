@@ -13,6 +13,7 @@ type Row = {
   price: number;
   isPublished: boolean;
   isFeatured: boolean;
+  sortOrder: number;
   category: string | null;
   topic: string | null;
 };
@@ -114,6 +115,7 @@ export default function AdminProductsPage() {
               <th className="p-2 text-start">عنوان</th>
               <th className="p-2 text-start">نوع</th>
               <th className="p-2 text-start">قیمت</th>
+              <th className="p-2 text-start">ترتیب</th>
               <th className="p-2 text-start">دسته / موضوع</th>
               <th className="p-2 text-start">وضعیت</th>
               <th className="p-2" />
@@ -130,6 +132,7 @@ export default function AdminProductsPage() {
                 </td>
                 <td className="p-2">{typeLabel(product.type)}</td>
                 <td className="p-2">{formatPrice(product.price)}</td>
+                <td className="p-2 tabular-nums text-muted-foreground">{product.sortOrder}</td>
                 <td className="p-2 text-muted-foreground">
                   {product.category ?? "—"} / {product.topic ?? "—"}
                 </td>

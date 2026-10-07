@@ -144,6 +144,7 @@ model Product {
   level        ProductLevel?
   isPublished  Boolean       @default(false)
   isFeatured   Boolean       @default(false)
+  sortOrder    Int           @default(0)
   categoryId   String?
   topicId      String?
   createdAt    DateTime      @default(now())

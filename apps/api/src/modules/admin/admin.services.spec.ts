@@ -8,6 +8,15 @@ import {
   productUpdateSchema,
 } from './admin.schemas.js';
 
+const validProduct = {
+  type: 'SINGLE_PRODUCT' as const,
+  title: 'محصول نمونه',
+  slug: 'sample-product',
+  summary: 'خلاصه',
+  description: 'توضیح',
+  price: 1000,
+};
+
 describe('Admin services', () => {
   const prisma = {
     product: { findUnique: vi.fn(), create: vi.fn(), delete: vi.fn(), findMany: vi.fn(), count: vi.fn() },
@@ -50,6 +59,30 @@ describe('Admin services', () => {
 
   it('keeps unspecified fields out of partial product updates', () => {
     expect(productUpdateSchema.parse({ title: 'عنوان تازه' })).toEqual({ title: 'عنوان تازه' });
+  });
+
+  it('defaults omitted create sortOrder to 0', () => {
+    const input = productInputSchema.parse({
+      type: 'SINGLE_PRODUCT',
+      title: 'محصول نمونه',
+      slug: 'sample-product',
+      summary: 'خلاصه',
+      description: 'توضیح',
+      price: 1000,
+    });
+    expect(input.sortOrder).toBe(0);
+  });
+
+  it('rejects a negative sortOrder', () => {
+    expect(productInputSchema.safeParse({ ...validProduct, sortOrder: -1 }).success).toBe(false);
+  });
+
+  it('rejects a sortOrder above 10000', () => {
+    expect(productInputSchema.safeParse({ ...validProduct, sortOrder: 10001 }).success).toBe(false);
+  });
+
+  it('accepts a partial update with only sortOrder', () => {
+    expect(productUpdateSchema.parse({ sortOrder: 5 })).toEqual({ sortOrder: 5 });
   });
 
   describe('product list filters', () => {
@@ -101,7 +134,7 @@ describe('Admin services', () => {
       expect(prisma.product.findMany.mock.calls[0]![0]).toMatchObject({
         skip: 20,
         take: 20,
-        orderBy: { updatedAt: 'desc' },
+        orderBy: [{ sortOrder: 'asc' }, { updatedAt: 'desc' }],
       });
     });
 

@@ -17,6 +17,7 @@ type Product = {
   topicId: string | null;
   isPublished: boolean;
   isFeatured: boolean;
+  sortOrder: number;
 };
 type Option = { id: string; name: string };
 type FieldName = keyof typeof fieldCopy;
@@ -44,6 +45,7 @@ const fieldCopy = {
   topicId: "موضوع انتخاب‌شده معتبر نیست.",
   summary: "خلاصه باید بین ۲ تا ۳۰۰ نویسه باشد.",
   description: "توضیحات باید بین ۲ تا ۲۰۰۰۰ نویسه باشد.",
+  sortOrder: "ترتیب نمایش باید عدد صحیح بین ۰ تا ۱۰۰۰۰ باشد.",
 } as const;
 
 const SLUG_TAKEN = "این slug قبلاً استفاده شده است.";
@@ -156,6 +158,7 @@ export function ProductForm({ id }: { id?: string }) {
       topicId: text("topicId") || null,
       isPublished: formData.get("isPublished") === "on",
       isFeatured: formData.get("isFeatured") === "on",
+      sortOrder: Number(text("sortOrder") || 0),
     };
     try {
       await adminFetch(id ? `/admin/products/${id}` : "/admin/products", sendJson(id ? "PATCH" : "POST", payload));
@@ -261,6 +264,22 @@ export function ProductForm({ id }: { id?: string }) {
             ))}
           </select>
           {errorFor("topicId")}
+        </label>
+        <label className="grid gap-1 text-sm">
+          ترتیب نمایش
+          <input
+            name="sortOrder"
+            type="number"
+            min={0}
+            max={10000}
+            step={1}
+            required
+            defaultValue={current?.sortOrder ?? 0}
+            className={inputClass}
+            {...invalidProps("sortOrder")}
+          />
+          <span className="text-xs text-muted-foreground">عدد کوچک‌تر = نمایش زودتر در فهرست‌ها.</span>
+          {errorFor("sortOrder")}
         </label>
       </div>
       <label className="grid gap-1 text-sm">

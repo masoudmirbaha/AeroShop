@@ -24,12 +24,12 @@ export class ProductsService {
           }
         : {}),
     };
-    const orderBy: Prisma.ProductOrderByWithRelationInput =
+    const orderBy: Prisma.ProductOrderByWithRelationInput[] =
       query.sort === 'price_asc'
-        ? { price: 'asc' }
+        ? [{ price: 'asc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }]
         : query.sort === 'price_desc'
-          ? { price: 'desc' }
-          : { createdAt: 'desc' };
+          ? [{ price: 'desc' }, { sortOrder: 'asc' }, { createdAt: 'desc' }]
+          : [{ sortOrder: 'asc' }, { createdAt: 'desc' }];
 
     const [total, items] = await Promise.all([
       this.prisma.product.count({ where }),
@@ -76,7 +76,7 @@ export class ProductsService {
             id: { not: product.id },
           },
           take: 4,
-          orderBy: { createdAt: 'desc' },
+          orderBy: [{ sortOrder: 'asc' }, { createdAt: 'desc' }],
           include: productInclude,
         })
       : [];
