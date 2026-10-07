@@ -8,7 +8,7 @@ import { toman } from '../../common/money.js';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import type {
-  AdminListQuery,
+  AdminProductQuery,
   CategoryInput,
   CategoryUpdate,
   ProductInput,
@@ -19,15 +19,19 @@ import type {
 export class AdminCatalogService {
   constructor(private readonly prisma: PrismaService) {}
 
-  async listProducts(query: AdminListQuery) {
-    const where: Prisma.ProductWhereInput = query.q
-      ? {
-          OR: [
-            { title: { contains: query.q, mode: 'insensitive' } },
-            { slug: { contains: query.q, mode: 'insensitive' } },
-          ],
-        }
-      : {};
+  async listProducts(query: AdminProductQuery) {
+    const where: Prisma.ProductWhereInput = {
+      ...(query.status ? { isPublished: query.status === 'published' } : {}),
+      ...(query.type ? { type: query.type } : {}),
+      ...(query.q
+        ? {
+            OR: [
+              { title: { contains: query.q, mode: 'insensitive' } },
+              { slug: { contains: query.q, mode: 'insensitive' } },
+            ],
+          }
+        : {}),
+    };
     const [total, items] = await Promise.all([
       this.prisma.product.count({ where }),
       this.prisma.product.findMany({

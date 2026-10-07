@@ -8,9 +8,10 @@ const slug = z
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'فقط حروف کوچک انگلیسی، عدد و خط تیره');
 const optionalId = z.string().min(1).nullable().optional();
 const money = z.number().int().nonnegative();
+const productType = z.enum(['SINGLE_PRODUCT', 'BUNDLE', 'COURSE', 'FREE']);
 
 const productFields = z.object({
-  type: z.enum(['SINGLE_PRODUCT', 'BUNDLE', 'COURSE', 'FREE']),
+  type: productType,
   title: z.string().trim().min(2).max(160),
   slug,
   summary: z.string().trim().min(2).max(300),
@@ -66,6 +67,13 @@ export const adminListQuerySchema = z.object({
   pageSize: z.coerce.number().int().min(1).max(100).default(20),
 });
 
+// Orders and service requests keep the loose `status`, each matching it against its own enum,
+// so the product list narrows it here instead of changing the shared shape.
+export const adminProductQuerySchema = adminListQuerySchema.extend({
+  status: z.enum(['published', 'draft']).optional(),
+  type: productType.optional(),
+});
+
 export type ProductInput = z.infer<typeof productInputSchema>;
 export type ProductUpdate = z.infer<typeof productUpdateSchema>;
 export type CategoryInput = z.infer<typeof categoryInputSchema>;
@@ -74,3 +82,4 @@ export type UserUpdate = z.infer<typeof userUpdateSchema>;
 export type FaqInput = z.infer<typeof faqInputSchema>;
 export type FaqUpdate = z.infer<typeof faqUpdateSchema>;
 export type AdminListQuery = z.infer<typeof adminListQuerySchema>;
+export type AdminProductQuery = z.infer<typeof adminProductQuerySchema>;

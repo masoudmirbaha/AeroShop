@@ -3,7 +3,7 @@ import { Roles } from '../../common/roles.decorator.js';
 import { ZodValidationPipe } from '../../common/zod-validation.pipe.js';
 import { AdminCatalogService } from './admin-catalog.service.js';
 import {
-  adminListQuerySchema,
+  adminProductQuerySchema,
   categoryInputSchema,
   categoryUpdateSchema,
   productInputSchema,
@@ -16,8 +16,8 @@ export class AdminCatalogController {
   constructor(private readonly catalog: AdminCatalogService) {}
 
   @Get('products')
-  listProducts(@Query(new ZodValidationPipe(adminListQuerySchema)) query: unknown) {
-    return this.catalog.listProducts(adminListQuerySchema.parse(query));
+  listProducts(@Query(new ZodValidationPipe(adminProductQuerySchema)) query: unknown) {
+    return this.catalog.listProducts(adminProductQuerySchema.parse(query));
   }
 
   @Get('products/:id')

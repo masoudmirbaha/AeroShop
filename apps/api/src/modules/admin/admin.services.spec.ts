@@ -2,11 +2,15 @@ import { BadRequestException, ConflictException } from '@nestjs/common';
 import type { PrismaService } from '../../prisma/prisma.service.js';
 import { AdminCatalogService } from './admin-catalog.service.js';
 import { AdminSalesService } from './admin-sales.service.js';
-import { productInputSchema, productUpdateSchema } from './admin.schemas.js';
+import {
+  adminProductQuerySchema,
+  productInputSchema,
+  productUpdateSchema,
+} from './admin.schemas.js';
 
 describe('Admin services', () => {
   const prisma = {
-    product: { findUnique: vi.fn(), create: vi.fn(), delete: vi.fn() },
+    product: { findUnique: vi.fn(), create: vi.fn(), delete: vi.fn(), findMany: vi.fn(), count: vi.fn() },
     orderItem: { count: vi.fn() },
     user: { findUnique: vi.fn() },
   };
@@ -46,5 +50,67 @@ describe('Admin services', () => {
 
   it('keeps unspecified fields out of partial product updates', () => {
     expect(productUpdateSchema.parse({ title: 'عنوان تازه' })).toEqual({ title: 'عنوان تازه' });
+  });
+
+  describe('product list filters', () => {
+    async function listWith(query: Record<string, string>) {
+      prisma.product.count.mockResolvedValueOnce(0);
+      prisma.product.findMany.mockResolvedValueOnce([]);
+      await catalog.listProducts(adminProductQuerySchema.parse(query));
+      return prisma.product.findMany.mock.calls[0]![0].where as Record<string, unknown>;
+    }
+
+    it('lists drafts and published products when no status is given', async () => {
+      expect(await listWith({})).toEqual({});
+    });
+
+    it('keeps only published products for status=published', async () => {
+      expect(await listWith({ status: 'published' })).toEqual({ isPublished: true });
+    });
+
+    it('keeps only drafts for status=draft', async () => {
+      expect(await listWith({ status: 'draft' })).toEqual({ isPublished: false });
+    });
+
+    it('filters by product type', async () => {
+      expect(await listWith({ type: 'COURSE' })).toEqual({ type: 'COURSE' });
+    });
+
+    it('combines status and type', async () => {
+      expect(await listWith({ status: 'draft', type: 'COURSE' })).toEqual({
+        isPublished: false,
+        type: 'COURSE',
+      });
+    });
+
+    it('combines filters with the search term', async () => {
+      expect(await listWith({ status: 'draft', type: 'COURSE', q: 'test' })).toEqual({
+        isPublished: false,
+        type: 'COURSE',
+        OR: [
+          { title: { contains: 'test', mode: 'insensitive' } },
+          { slug: { contains: 'test', mode: 'insensitive' } },
+        ],
+      });
+    });
+
+    it('keeps the existing pagination defaults', async () => {
+      prisma.product.count.mockResolvedValueOnce(0);
+      prisma.product.findMany.mockResolvedValueOnce([]);
+      await catalog.listProducts(adminProductQuerySchema.parse({ page: '2' }));
+      expect(prisma.product.findMany.mock.calls[0]![0]).toMatchObject({
+        skip: 20,
+        take: 20,
+        orderBy: { updatedAt: 'desc' },
+      });
+    });
+
+    it('rejects an unknown status before it reaches the service', () => {
+      expect(adminProductQuerySchema.safeParse({ status: 'archived' }).success).toBe(false);
+    });
+
+    it('rejects an unknown product type before it reaches the service', () => {
+      expect(adminProductQuerySchema.safeParse({ type: 'WEBINAR' }).success).toBe(false);
+    });
   });
 });

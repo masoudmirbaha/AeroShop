@@ -17,11 +17,27 @@ type Row = {
   topic: string | null;
 };
 
+const statuses = [
+  ["", "همه"],
+  ["published", "منتشرشده"],
+  ["draft", "پیش‌نویس"],
+];
+const types = [
+  ["", "همه"],
+  ["SINGLE_PRODUCT", "محصول تکی"],
+  ["BUNDLE", "بسته"],
+  ["COURSE", "دوره"],
+  ["FREE", "رایگان"],
+];
+
 export default function AdminProductsPage() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
+  const [status, setStatus] = useState("");
+  const [type, setType] = useState("");
   const [message, setMessage] = useState("");
-  const params = new URLSearchParams({ page: String(page), ...(q ? { q } : {}) });
+  // An empty filter is left out of the query so the API keeps returning every product.
+  const params = new URLSearchParams({ page: String(page), ...(q ? { q } : {}), ...(status ? { status } : {}), ...(type ? { type } : {}) });
   const { data, error, reload } = useAdminData<Paged<Row>>(`/admin/products?${params}`);
 
   async function run(action: () => Promise<unknown>, done: string) {
@@ -42,18 +58,54 @@ export default function AdminProductsPage() {
           محصول جدید
         </Link>
       </div>
-      <form
-        className="mb-4 flex gap-2"
-        action={(formData) => {
-          setPage(1);
-          setQ(String(formData.get("q") ?? "").trim());
-        }}
-      >
-        <input name="q" defaultValue={q} placeholder="جستجو در عنوان یا slug" className={`${inputClass} flex-1`} />
-        <button type="submit" className="rounded-md border px-4 py-2">
-          جستجو
-        </button>
-      </form>
+      <div className="mb-4 flex flex-wrap items-end gap-3">
+        <form
+          className="flex min-w-60 flex-1 gap-2"
+          action={(formData) => {
+            setPage(1);
+            setQ(String(formData.get("q") ?? "").trim());
+          }}
+        >
+          <input name="q" defaultValue={q} placeholder="جستجو در عنوان یا slug" className={`${inputClass} flex-1`} />
+          <button type="submit" className="rounded-md border px-4 py-2">
+            جستجو
+          </button>
+        </form>
+        <label className="grid min-w-36 flex-1 gap-1 text-sm sm:flex-none">
+          وضعیت
+          <select
+            value={status}
+            onChange={(event) => {
+              setPage(1);
+              setStatus(event.target.value);
+            }}
+            className={inputClass}
+          >
+            {statuses.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid min-w-36 flex-1 gap-1 text-sm sm:flex-none">
+          نوع محصول
+          <select
+            value={type}
+            onChange={(event) => {
+              setPage(1);
+              setType(event.target.value);
+            }}
+            className={inputClass}
+          >
+            {types.map(([value, label]) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </label>
+      </div>
       <Notice text={error || message} />
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
