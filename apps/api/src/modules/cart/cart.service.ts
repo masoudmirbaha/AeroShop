@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { toman } from '../../common/money.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
+import { productImagePublicUrl } from '../products/product-image.public.js';
 
 const itemInclude = {
   product: { include: { images: { orderBy: { sortOrder: 'asc' as const }, take: 1 } } },
@@ -96,7 +97,9 @@ export class CartService {
           type: item.product.type,
           price,
           isDigital: item.product.isDigital,
-          image: item.product.images[0]?.url ?? null,
+          image: item.product.images[0]
+            ? productImagePublicUrl(item.product.images[0].id)
+            : null,
         },
         lineTotal: price * item.quantity,
       };

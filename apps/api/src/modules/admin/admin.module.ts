@@ -6,6 +6,8 @@ import { AdminContentController } from './admin-content.controller.js';
 import { AdminContentService } from './admin-content.service.js';
 import { AdminProductFilesController } from './admin-product-files.controller.js';
 import { AdminProductFilesService } from './admin-product-files.service.js';
+import { AdminProductImagesController } from './admin-product-images.controller.js';
+import { AdminProductImagesService } from './admin-product-images.service.js';
 import { AdminSalesController } from './admin-sales.controller.js';
 import { AdminSalesService } from './admin-sales.service.js';
 
@@ -16,12 +18,14 @@ import { AdminSalesService } from './admin-sales.service.js';
     AdminSalesController,
     AdminContentController,
     AdminProductFilesController,
+    AdminProductImagesController,
   ],
   providers: [
     AdminCatalogService,
     AdminSalesService,
     AdminContentService,
     AdminProductFilesService,
+    AdminProductImagesService,
   ],
 })
 export class AdminModule {}

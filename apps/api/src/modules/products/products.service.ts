@@ -1,7 +1,7 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
 import type { Prisma } from '../../generated/prisma/client.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
-import { productInclude, toProductCard } from './product.presenter.js';
+import { productInclude, toProductCard, toPublicProductImages } from './product.presenter.js';
 import type { ProductQuery } from './products.schemas.js';
 
 @Injectable()
@@ -84,7 +84,7 @@ export class ProductsService {
     return {
       ...toProductCard(product),
       description: product.description,
-      images: product.images.map((image) => ({ url: image.url, alt: image.alt })),
+      images: toPublicProductImages(product.images),
       files: product.files,
       sections: product.sections,
       bundleItems: product.bundleItems.map((item) => toProductCard(item.product)),

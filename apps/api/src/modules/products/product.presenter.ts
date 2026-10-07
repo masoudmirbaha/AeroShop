@@ -1,5 +1,6 @@
 import { toman } from '../../common/money.js';
 import type { Category, Product, ProductImage, Topic } from '../../generated/prisma/client.js';
+import { productImagePublicUrl } from './product-image.public.js';
 
 export const productInclude = {
   category: true,
@@ -14,6 +15,7 @@ type CardProduct = Product & {
 };
 
 export function toProductCard(product: CardProduct) {
+  const primary = product.images[0];
   return {
     id: product.id,
     type: product.type,
@@ -30,6 +32,13 @@ export function toProductCard(product: CardProduct) {
       slug: product.category.slug,
     },
     topic: product.topic && { name: product.topic.name, slug: product.topic.slug },
-    image: product.images[0]?.url ?? null,
+    image: primary ? productImagePublicUrl(primary.id) : null,
   };
+}
+
+export function toPublicProductImages(images: ProductImage[]) {
+  return images.map((image) => ({
+    url: productImagePublicUrl(image.id),
+    alt: image.alt,
+  }));
 }
