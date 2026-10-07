@@ -6,6 +6,7 @@ export class AdminError extends Error {
   constructor(
     message: string,
     readonly status: number,
+    readonly fields: Record<string, string> = {},
   ) {
     super(message);
   }
@@ -26,12 +27,24 @@ export async function adminFetch<T>(path: string, init: RequestInit = {}): Promi
     if (refreshed.ok) response = await send();
   }
   const body: unknown = await response.json().catch(() => null);
-  if (!response.ok) throw new AdminError(errorMessage(body), response.status);
+  if (!response.ok) throw new AdminError(errorMessage(body), response.status, fieldMessages(body));
   return body as T;
 }
 
 export function sendJson(method: "POST" | "PATCH", data: unknown): RequestInit {
   return { method, body: JSON.stringify(data) };
+}
+
+function fieldMessages(body: unknown) {
+  if (!body || typeof body !== "object" || !("errors" in body)) return {};
+  const errors = (body as { errors?: unknown }).errors;
+  if (!errors || typeof errors !== "object") return {};
+  const fields: Record<string, string> = {};
+  for (const [key, value] of Object.entries(errors)) {
+    const text = Array.isArray(value) ? value.find((item) => typeof item === "string") : undefined;
+    if (typeof text === "string" && text) fields[key] = text;
+  }
+  return fields;
 }
 
 function errorMessage(body: unknown) {
