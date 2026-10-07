@@ -1,5 +1,7 @@
 import {
   Controller,
+  Delete,
+  Get,
   Param,
   Post,
   UploadedFile,
@@ -16,6 +18,11 @@ import { productFileMulterOptions } from './product-file-upload.multer.js';
 export class AdminProductFilesController {
   constructor(private readonly files: AdminProductFilesService) {}
 
+  @Get(':productId/files')
+  list(@Param('productId') productId: string) {
+    return this.files.list(productId);
+  }
+
   @Post(':productId/files')
   @UseInterceptors(FileInterceptor(PRODUCT_FILE_UPLOAD_FIELD, productFileMulterOptions()))
   upload(
@@ -23,5 +30,10 @@ export class AdminProductFilesController {
     @UploadedFile() file: Express.Multer.File | undefined,
   ) {
     return this.files.upload(productId, file);
+  }
+
+  @Delete(':productId/files/:fileId')
+  remove(@Param('productId') productId: string, @Param('fileId') fileId: string) {
+    return this.files.remove(productId, fileId);
   }
 }

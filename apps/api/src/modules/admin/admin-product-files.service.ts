@@ -20,6 +20,22 @@ export class AdminProductFilesService {
     private readonly storage: StorageProvider,
   ) {}
 
+  async list(productId: string) {
+    const product = await this.prisma.product.findUnique({
+      where: { id: productId },
+      select: { id: true },
+    });
+    if (!product) {
+      throw new NotFoundException('محصول یافت نشد');
+    }
+
+    const rows = await this.prisma.productFile.findMany({
+      where: { productId },
+      orderBy: { createdAt: 'desc' },
+    });
+    return rows.map((row) => this.toSafeResponse(row));
+  }
+
   async upload(productId: string, file: UploadedTempFile | undefined) {
     if (!file?.path) {
       throw new BadRequestException('فایل ارسال نشده است');
@@ -65,6 +81,25 @@ export class AdminProductFilesService {
     } finally {
       await unlink(tempPath).catch(() => undefined);
     }
+  }
+
+  async remove(productId: string, fileId: string) {
+    const row = await this.prisma.productFile.findFirst({
+      where: { id: fileId, productId },
+      select: { id: true, storageKey: true },
+    });
+    if (!row) {
+      throw new NotFoundException('فایل یافت نشد');
+    }
+
+    const storageKey = row.storageKey;
+    await this.prisma.productFile.delete({ where: { id: row.id } });
+    try {
+      await this.storage.delete(storageKey);
+    } catch {
+      // Best-effort: DB row (and cascaded grants) are already removed.
+    }
+    return { ok: true as const };
   }
 
   private toSafeResponse(row: {

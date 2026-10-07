@@ -15,12 +15,18 @@ export class AdminError extends Error {
 export type Paged<T> = { items: T[]; page: number; pageSize: number; total: number };
 
 export async function adminFetch<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const send = () =>
-    fetch(`/api/v1${path}`, {
+  const send = () => {
+    const headers = new Headers(init.headers);
+    // FormData must keep Content-Type unset so the browser adds the multipart boundary.
+    if (init.body && !(init.body instanceof FormData) && !headers.has("Content-Type")) {
+      headers.set("Content-Type", "application/json");
+    }
+    return fetch(`/api/v1${path}`, {
       ...init,
       credentials: "include",
-      headers: init.body ? { "Content-Type": "application/json", ...init.headers } : init.headers,
+      headers,
     });
+  };
   let response = await send();
   if (response.status === 401) {
     const refreshed = await fetch("/api/v1/auth/refresh", { method: "POST", credentials: "include" });

@@ -83,7 +83,12 @@ describe('AdminProductFilesService upload', () => {
   let storage: LocalStorageProvider;
   let prisma: {
     product: { findUnique: ReturnType<typeof vi.fn> };
-    productFile: { create: ReturnType<typeof vi.fn> };
+    productFile: {
+      create: ReturnType<typeof vi.fn>;
+      findMany: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
   };
   let service: AdminProductFilesService;
 
@@ -93,7 +98,12 @@ describe('AdminProductFilesService upload', () => {
     storage = new LocalStorageProvider(storageRoot);
     prisma = {
       product: { findUnique: vi.fn() },
-      productFile: { create: vi.fn() },
+      productFile: {
+        create: vi.fn(),
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+        delete: vi.fn(),
+      },
     };
     service = new AdminProductFilesService(prisma as unknown as PrismaService, storage);
   });
@@ -228,5 +238,152 @@ describe('admin product file upload authorization', () => {
     const guard = new JwtAuthGuard(jwt as never, reflector as unknown as Reflector);
     expect(() => guard.canActivate(mockContext())).toThrow(UnauthorizedException);
     expect(jwt.verify).not.toHaveBeenCalled();
+  });
+
+  it('rejects anonymous and non-admin callers for list/delete the same way', () => {
+    const reflector = {
+      getAllAndOverride: vi.fn((key: string) => (key === ROLES_KEY ? ['ADMIN'] : undefined)),
+    };
+    const guard = new RolesGuard(reflector as unknown as Reflector);
+    expect(() => guard.canActivate(mockContext())).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(mockContext({ sub: 'u1', role: 'USER' }))).toThrow(
+      ForbiddenException,
+    );
+  });
+});
+
+describe('AdminProductFilesService list and delete', () => {
+  let storage: LocalStorageProvider;
+  let prisma: {
+    product: { findUnique: ReturnType<typeof vi.fn> };
+    productFile: {
+      findMany: ReturnType<typeof vi.fn>;
+      findFirst: ReturnType<typeof vi.fn>;
+      delete: ReturnType<typeof vi.fn>;
+    };
+  };
+  let service: AdminProductFilesService;
+
+  beforeEach(() => {
+    storage = new LocalStorageProvider();
+    prisma = {
+      product: { findUnique: vi.fn() },
+      productFile: {
+        findMany: vi.fn(),
+        findFirst: vi.fn(),
+        delete: vi.fn(),
+      },
+    };
+    service = new AdminProductFilesService(prisma as unknown as PrismaService, storage);
+  });
+
+  it('lists files with safe fields only, newest first', async () => {
+    prisma.product.findUnique.mockResolvedValueOnce({ id: 'p1' });
+    prisma.productFile.findMany.mockResolvedValueOnce([
+      {
+        id: 'pf2',
+        productId: 'p1',
+        filename: 'b.pdf',
+        storageKey: 'products/p1/secret-b.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 20,
+        createdAt: new Date('2026-02-01T00:00:00.000Z'),
+      },
+      {
+        id: 'pf1',
+        productId: 'p1',
+        filename: 'a.pdf',
+        storageKey: 'products/p1/secret-a.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 10,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+
+    const rows = await service.list('p1');
+    expect(prisma.productFile.findMany).toHaveBeenCalledWith({
+      where: { productId: 'p1' },
+      orderBy: { createdAt: 'desc' },
+    });
+    expect(rows).toEqual([
+      {
+        id: 'pf2',
+        productId: 'p1',
+        filename: 'b.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 20,
+        createdAt: new Date('2026-02-01T00:00:00.000Z'),
+      },
+      {
+        id: 'pf1',
+        productId: 'p1',
+        filename: 'a.pdf',
+        mimeType: 'application/pdf',
+        sizeBytes: 10,
+        createdAt: new Date('2026-01-01T00:00:00.000Z'),
+      },
+    ]);
+    for (const row of rows) {
+      expect(row).not.toHaveProperty('storageKey');
+    }
+  });
+
+  it('returns 404 when listing files for a missing product', async () => {
+    prisma.product.findUnique.mockResolvedValueOnce(null);
+    await expect(service.list('missing')).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.productFile.findMany).not.toHaveBeenCalled();
+  });
+
+  it('deletes the DB row then calls storage.delete with the storageKey', async () => {
+    prisma.productFile.findFirst.mockResolvedValueOnce({
+      id: 'pf1',
+      storageKey: 'products/p1/file.pdf',
+    });
+    prisma.productFile.delete.mockResolvedValueOnce({ id: 'pf1' });
+    const deleteSpy = vi.spyOn(storage, 'delete').mockResolvedValueOnce(undefined);
+
+    await expect(service.remove('p1', 'pf1')).resolves.toEqual({ ok: true });
+    expect(prisma.productFile.findFirst).toHaveBeenCalledWith({
+      where: { id: 'pf1', productId: 'p1' },
+      select: { id: true, storageKey: true },
+    });
+    expect(prisma.productFile.delete).toHaveBeenCalledWith({ where: { id: 'pf1' } });
+    expect(deleteSpy).toHaveBeenCalledWith('products/p1/file.pdf');
+    expect(deleteSpy.mock.invocationCallOrder[0]!).toBeGreaterThan(
+      prisma.productFile.delete.mock.invocationCallOrder[0]!,
+    );
+  });
+
+  it('returns 404 when the file belongs to another product and leaves it untouched', async () => {
+    prisma.productFile.findFirst.mockResolvedValueOnce(null);
+    const deleteSpy = vi.spyOn(storage, 'delete');
+
+    await expect(service.remove('other-product', 'pf1')).rejects.toBeInstanceOf(NotFoundException);
+    expect(prisma.productFile.delete).not.toHaveBeenCalled();
+    expect(deleteSpy).not.toHaveBeenCalled();
+  });
+
+  it('does not call storage.delete when DB deletion fails', async () => {
+    prisma.productFile.findFirst.mockResolvedValueOnce({
+      id: 'pf1',
+      storageKey: 'products/p1/file.pdf',
+    });
+    prisma.productFile.delete.mockRejectedValueOnce(new Error('db delete failed'));
+    const deleteSpy = vi.spyOn(storage, 'delete');
+
+    await expect(service.remove('p1', 'pf1')).rejects.toThrow('db delete failed');
+    expect(deleteSpy).not.toHaveBeenCalled();
+  });
+
+  it('still returns success when storage.delete fails after DB deletion', async () => {
+    prisma.productFile.findFirst.mockResolvedValueOnce({
+      id: 'pf1',
+      storageKey: 'products/p1/file.pdf',
+    });
+    prisma.productFile.delete.mockResolvedValueOnce({ id: 'pf1' });
+    vi.spyOn(storage, 'delete').mockRejectedValueOnce(new Error('disk busy'));
+
+    await expect(service.remove('p1', 'pf1')).resolves.toEqual({ ok: true });
+    expect(prisma.productFile.delete).toHaveBeenCalled();
   });
 });
