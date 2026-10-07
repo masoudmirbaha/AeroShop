@@ -10,5 +10,6 @@ import { LocalStorageProvider, StorageProvider } from './storage-provider.js';
     LocalStorageProvider,
     { provide: StorageProvider, useExisting: LocalStorageProvider },
   ],
+  exports: [LocalStorageProvider, StorageProvider],
 })
 export class DownloadsModule {}

@@ -7,6 +7,7 @@ import {
   Logger,
 } from '@nestjs/common';
 import type { Response } from 'express';
+import { MulterError } from 'multer';
 import { Prisma } from '../generated/prisma/client.js';
 
 const PRISMA_ERRORS: Record<string, { status: number; message: string }> = {
@@ -42,6 +43,21 @@ export class HttpExceptionFilter implements ExceptionFilter {
         response.status(known.status).json({ statusCode: known.status, message: known.message });
         return;
       }
+    }
+
+    if (exception instanceof MulterError) {
+      if (exception.code === 'LIMIT_FILE_SIZE') {
+        response.status(HttpStatus.PAYLOAD_TOO_LARGE).json({
+          statusCode: HttpStatus.PAYLOAD_TOO_LARGE,
+          message: 'حجم فایل بیش از حد مجاز است',
+        });
+        return;
+      }
+      response.status(HttpStatus.BAD_REQUEST).json({
+        statusCode: HttpStatus.BAD_REQUEST,
+        message: 'آپلود فایل نامعتبر است',
+      });
+      return;
     }
 
     this.logger.error(
