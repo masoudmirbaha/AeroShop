@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { adminFetch, inputClass, Notice, Pager, sendJson, useAdminData, type Paged } from "@/components/admin/admin-client";
+import { AdminError, adminFetch, inputClass, Notice, Pager, sendJson, useAdminData, type Paged } from "@/components/admin/admin-client";
 import { formatDate } from "@/components/admin/labels";
 
 type User = {
@@ -15,6 +15,36 @@ type User = {
   orderCount: number;
 };
 
+function confirmationFor(user: User, change: Partial<Pick<User, "role" | "isActive">>) {
+  const name = `${user.firstName} ${user.lastName}`.trim();
+  const who = name ? `${name} (${user.email})` : user.email;
+  if (change.role === "ADMIN" && user.role !== "ADMIN") {
+    return `${who} مدیر شود؟ مدیر به کل پنل مدیریت، از جمله محصولات، سفارش‌ها و حساب‌های کاربران، دسترسی کامل دارد.`;
+  }
+  if (change.role && change.role !== "ADMIN" && user.role === "ADMIN") {
+    return `نقش مدیر از ${who} گرفته شود؟ دسترسی او به پنل مدیریت گرفته می‌شود.`;
+  }
+  if (change.isActive === false && user.isActive) {
+    return `حساب ${who} غیرفعال شود؟ او دیگر نمی‌تواند وارد حساب شود.`;
+  }
+  return null;
+}
+
+const PERSIAN_TEXT = /[\u0600-\u06FF]/;
+
+function updateErrorMessage(reason: unknown) {
+  if (reason instanceof AdminError) {
+    if (reason.message && PERSIAN_TEXT.test(reason.message)) return reason.message;
+    if (reason.status >= 500) return "خطایی در سرور رخ داد و تغییر ذخیره نشد. لطفاً دوباره تلاش کنید.";
+    if (reason.status === 401) return "نشست شما منقضی شده است. لطفاً دوباره وارد شوید.";
+    if (reason.status === 403) return "اجازه انجام این تغییر را ندارید.";
+    if (reason.status === 404) return "این کاربر پیدا نشد. فهرست را دوباره بارگذاری کنید.";
+  } else if (reason instanceof TypeError || (reason instanceof Error && /failed to fetch|networkerror|load failed/i.test(reason.message))) {
+    return "ارتباط با سرور برقرار نشد و تغییر ذخیره نشد. اتصال را بررسی کنید و دوباره تلاش کنید.";
+  }
+  return "به‌روزرسانی حساب انجام نشد. لطفاً دوباره تلاش کنید.";
+}
+
 export default function AdminUsersPage() {
   const [page, setPage] = useState(1);
   const [q, setQ] = useState("");
@@ -23,12 +53,15 @@ export default function AdminUsersPage() {
   const { data, error, reload } = useAdminData<Paged<User>>(`/admin/users?${params}`);
 
   async function update(user: User, change: Partial<Pick<User, "role" | "isActive">>) {
+    const question = confirmationFor(user, change);
+    // The role select is controlled by the saved role, so cancelling leaves it unchanged.
+    if (question && !window.confirm(question)) return;
     try {
       await adminFetch(`/admin/users/${user.id}`, sendJson("PATCH", change));
       setMessage(`حساب ${user.email} به‌روزرسانی شد.`);
       reload();
     } catch (reason) {
-      setMessage(reason instanceof Error ? reason.message : "انجام نشد.");
+      setMessage(updateErrorMessage(reason));
     }
   }
 

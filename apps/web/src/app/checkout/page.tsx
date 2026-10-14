@@ -23,7 +23,8 @@ export default function CheckoutPage() {
       return;
     }
     if (!response.ok) {
-      setMessage("ثبت سفارش انجام نشد. سبد را بررسی کنید.");
+      const body = (await response.json().catch(() => null)) as { message?: unknown } | null;
+      setMessage(typeof body?.message === "string" ? body.message : "ثبت سفارش انجام نشد. سبد را بررسی کنید.");
       return;
     }
     const order = await response.json();

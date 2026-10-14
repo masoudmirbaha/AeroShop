@@ -1,4 +1,9 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  ConflictException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { toman } from '../../common/money.js';
 import { PrismaService } from '../../prisma/prisma.service.js';
 import { PaymentProvider, type PaymentResult } from '../payments/payment-provider.js';
@@ -29,7 +34,7 @@ export class OrdersService {
     return presentOrder(order);
   }
 
-  async checkout(userId: string, result: PaymentResult) {
+  async checkout(userId: string, simulatedResult: PaymentResult) {
     const cart = await this.prisma.cart.findUnique({
       where: { userId },
       include: {
@@ -53,7 +58,15 @@ export class OrdersService {
     }
 
     const lines = cart.items.map((item) => {
-      const unitPrice = toman(item.product.price) ?? 0;
+      const unitPrice = toman(item.product.price);
+      // Prices are whole tomans (Decimal(12,0)) and quantities 1–99, but neither has a database
+      // constraint. Invalid data must never shrink the total or make a cart look free.
+      if (unitPrice == null || !Number.isSafeInteger(unitPrice) || unitPrice < 0) {
+        throw new BadRequestException('قیمت یکی از محصولات سبد خرید نامعتبر است');
+      }
+      if (!Number.isInteger(item.quantity) || item.quantity < 1) {
+        throw new BadRequestException('تعداد یکی از اقلام سبد خرید نامعتبر است');
+      }
       return {
         productId: item.product.id,
         productName: item.product.title,
@@ -64,9 +77,26 @@ export class OrdersService {
       };
     });
     const subtotal = lines.reduce((sum, line) => sum + line.lineTotal, 0);
-    const outcome = await this.payments.charge(subtotal, result);
+    // Free only when every product is priced at exactly zero, never because a total nets to
+    // zero. Anything else goes through the provider, which rejects when payments are disabled.
+    const isFree = lines.every((line) => line.unitPrice === 0);
+    const outcome: PaymentResult = isFree
+      ? 'SUCCESS'
+      : await this.payments.charge(subtotal, simulatedResult);
+    const checkedOutItems = cart.items.map((item) => ({ id: item.id, quantity: item.quantity }));
 
     return this.prisma.$transaction(async (tx) => {
+      if (outcome === 'SUCCESS') {
+        // Claims exactly the items priced above. A concurrent checkout (or a cart edit since
+        // the read) leaves fewer matches, and throwing here rolls back every write below.
+        const claimed = await tx.cartItem.deleteMany({
+          where: { cartId: cart.id, OR: checkedOutItems },
+        });
+        if (claimed.count !== checkedOutItems.length) {
+          throw new ConflictException('سبد خرید هم‌زمان تغییر کرده است؛ لطفاً دوباره تلاش کنید');
+        }
+      }
+
       const order = await tx.order.create({
         data: {
           userId,
@@ -74,13 +104,17 @@ export class OrdersService {
           subtotal,
           discount: 0,
           total: subtotal,
-          payment: {
-            create: {
-              provider: 'MOCK',
-              status: outcome === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
-              amount: subtotal,
-            },
-          },
+          ...(isFree
+            ? {}
+            : {
+                payment: {
+                  create: {
+                    provider: 'MOCK',
+                    status: outcome === 'SUCCESS' ? 'SUCCESS' : 'FAILED',
+                    amount: subtotal,
+                  },
+                },
+              }),
         },
       });
       const createdItems = [];
@@ -109,7 +143,6 @@ export class OrdersService {
             });
           }
         }
-        await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
       }
 
       const full = await tx.order.findUniqueOrThrow({

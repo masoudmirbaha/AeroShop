@@ -1,17 +1,27 @@
 import { z } from 'zod';
 
-const envSchema = z.object({
-  NODE_ENV: z
-    .enum(['development', 'test', 'production'])
-    .default('development'),
-  PORT: z.coerce.number().int().positive().default(4000),
-  WEB_URL: z.url().default('http://localhost:3000'),
-  DATABASE_URL: z.string().min(1),
-  JWT_ACCESS_SECRET: z.string().min(16),
-  JWT_REFRESH_SECRET: z.string().min(16),
-  ADMIN_EMAIL: z.email().optional(),
-  ADMIN_PASSWORD: z.string().min(8).optional(),
-});
+export const PAYMENT_MODES = ['mock', 'disabled'] as const;
+export type PaymentMode = (typeof PAYMENT_MODES)[number];
+
+const envSchema = z
+  .object({
+    NODE_ENV: z
+      .enum(['development', 'test', 'production'])
+      .default('development'),
+    PORT: z.coerce.number().int().positive().default(4000),
+    WEB_URL: z.url().default('http://localhost:3000'),
+    DATABASE_URL: z.string().min(1),
+    JWT_ACCESS_SECRET: z.string().min(16),
+    JWT_REFRESH_SECRET: z.string().min(16),
+    ADMIN_EMAIL: z.email().optional(),
+    ADMIN_PASSWORD: z.string().min(8).optional(),
+    PAYMENT_MODE: z.enum(PAYMENT_MODES).optional(),
+  })
+  // No real gateway exists yet, so production must opt out of payments by default.
+  .transform((env) => {
+    const fallback: PaymentMode = env.NODE_ENV === 'production' ? 'disabled' : 'mock';
+    return { ...env, PAYMENT_MODE: env.PAYMENT_MODE ?? fallback };
+  });
 
 export type Env = z.infer<typeof envSchema>;
 
@@ -27,6 +37,9 @@ function productionProblems(config: Record<string, unknown>, env: Env): string[]
   }
   if (env.JWT_ACCESS_SECRET === env.JWT_REFRESH_SECRET) {
     problems.push('JWT_ACCESS_SECRET and JWT_REFRESH_SECRET must differ');
+  }
+  if (env.PAYMENT_MODE === 'mock') {
+    problems.push('PAYMENT_MODE=mock is not allowed in production; mock payments mark orders paid');
   }
   return problems;
 }

@@ -51,6 +51,8 @@ const fieldCopy = {
 const SLUG_TAKEN = "این slug قبلاً استفاده شده است.";
 const LEAVE = "تغییرات ذخیره نشده‌اند. آیا مطمئن هستید که می‌خواهید خارج شوید؟";
 const DUPLICATE_VALUE = "این مقدار قبلاً ثبت شده است";
+const MISSING_ID = "محصول ذخیره شد اما شناسه آن دریافت نشد. آن را از فهرست محصولات باز کنید تا تصاویر و فایل‌ها را مدیریت کنید.";
+const PRODUCT_ID = /^[A-Za-z0-9_-]+$/;
 
 function readableFieldError(name: string, apiText: string) {
   if (/[\u0600-\u06FF]/.test(apiText)) return apiText;
@@ -161,9 +163,21 @@ export function ProductForm({ id }: { id?: string }) {
       sortOrder: Number(text("sortOrder") || 0),
     };
     try {
-      await adminFetch(id ? `/admin/products/${id}` : "/admin/products", sendJson(id ? "PATCH" : "POST", payload));
+      const saved = await adminFetch<{ id?: unknown } | null>(id ? `/admin/products/${id}` : "/admin/products", sendJson(id ? "PATCH" : "POST", payload));
+      if (id) {
+        dirty.current = false;
+        router.push("/admin/products");
+        return;
+      }
+      const createdId = typeof saved?.id === "string" && PRODUCT_ID.test(saved.id) ? saved.id : null;
+      if (!createdId) {
+        savingLock.current = false;
+        setSaving(false);
+        setMessage(MISSING_ID);
+        return;
+      }
       dirty.current = false;
-      router.push("/admin/products");
+      router.push(`/admin/products/${createdId}`);
     } catch (reason) {
       savingLock.current = false;
       setSaving(false);
