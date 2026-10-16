@@ -3,6 +3,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqList } from "@/components/faq-list";
 import { FlipCards } from "@/components/home/flip-cards";
+import { HeroCarousel } from "@/components/home/hero-carousel";
 import { HomeHero } from "@/components/home/hero";
 import { Card, IconTile, Section } from "@/components/page";
 import { ProductGrid } from "@/components/product-grid";
@@ -59,6 +60,7 @@ export default async function Home() {
 
   return (
     <main className="flex-1">
+      <HeroCarousel />
       <HomeHero />
 
       <Band lead>
