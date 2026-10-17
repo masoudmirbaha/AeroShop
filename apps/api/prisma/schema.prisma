@@ -469,3 +469,18 @@ model Page {
 
   @@index([kind, isPublished])
 }
+
+model HomeBanner {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  ctaText     String?
+  ctaUrl      String?
+  imageUrl    String?
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, sortOrder])
+}

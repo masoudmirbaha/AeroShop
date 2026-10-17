@@ -34,6 +34,23 @@ export class ContentController {
     });
   }
 
+  @Get('home-banners')
+  homeBanners() {
+    return this.prisma.homeBanner.findMany({
+      where: { isActive: true },
+      orderBy: [{ sortOrder: 'asc' }, { createdAt: 'asc' }, { id: 'asc' }],
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        ctaText: true,
+        ctaUrl: true,
+        imageUrl: true,
+        sortOrder: true,
+      },
+    });
+  }
+
   @Post('contact')
   contact(@Body(new ZodValidationPipe(contactSchema)) body: unknown) {
     const input = contactSchema.parse(body);
