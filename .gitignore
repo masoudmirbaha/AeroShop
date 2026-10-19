@@ -24,6 +24,7 @@ coverage/
 # keys / certificates
 *.pem
 *.key
+deploy/secrets/
 
 # local uploads / storage
 apps/api/storage/*

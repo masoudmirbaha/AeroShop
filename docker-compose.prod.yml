@@ -1,8 +1,10 @@
-# Production stack: postgres + one-off migrations + api + web.
+# Production stack: postgres + one-off migrations + api + web + nginx (TLS edge).
 #   cp .env.production.example .env.production   # then fill in real values
+#   Place TLS PEMs in deploy/secrets/ (gitignored); see deploy/nginx/start-nginx.sh.
 #   docker compose -f docker-compose.prod.yml --env-file .env.production up -d --build
-# Only the web app is published; api and postgres stay on the internal network.
-# Put a TLS-terminating reverse proxy in front of the web port.
+# Only nginx publishes public ports (80/443). api and postgres stay on internal networks;
+# web is published on loopback only, for SSH-tunnel checks.
+# nginx enables HTTPS once the bind-mounted certificate files exist.
 
 name: aeroshop-prod
 
@@ -11,6 +13,12 @@ x-node-image: &node-image
 
 x-database-url: &database-url
   DATABASE_URL: postgresql://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-aeroshop}
+
+x-logging: &default-logging
+  driver: json-file
+  options:
+    max-size: "10m"
+    max-file: "5"
 
 services:
   postgres:
@@ -27,6 +35,9 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+    networks:
+      - backend
+    logging: *default-logging
 
   migrate:
     build:
@@ -40,6 +51,9 @@ services:
       postgres:
         condition: service_healthy
     restart: "no"
+    networks:
+      - backend
+    logging: *default-logging
 
   api:
     build:
@@ -56,6 +70,8 @@ services:
       WEB_URL: ${WEB_URL:?Set WEB_URL to the public site origin}
       JWT_ACCESS_SECRET: ${JWT_ACCESS_SECRET:?Set JWT_ACCESS_SECRET}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:?Set JWT_REFRESH_SECRET}
+      # No real gateway exists yet; the API also refuses PAYMENT_MODE=mock in production.
+      PAYMENT_MODE: disabled
     volumes:
       - storage:/app/storage
     depends_on:
@@ -63,6 +79,16 @@ services:
         condition: service_healthy
       migrate:
         condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/api/v1/health').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - backend
+      - edge
+    logging: *default-logging
 
   web:
     build:
@@ -77,10 +103,61 @@ services:
     environment:
       API_URL: http://api:4000
     ports:
-      - "${WEB_PORT:-3000}:3000"
+      - "127.0.0.1:${WEB_PORT:-3000}:3000"
     depends_on:
       api:
         condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:'+process.env.PORT+'/favicon.ico').then(r=>process.exit(r.ok?0:1),()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      start_period: 20s
+      retries: 3
+    networks:
+      - edge
+    logging: *default-logging
+
+  nginx:
+    image: docker.arvancloud.ir/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    restart: unless-stopped
+    environment:
+      NGINX_MODE: production
+    entrypoint: ["/bin/sh", "/etc/nginx/aeroshop/start-nginx.sh"]
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./deploy/nginx:/etc/nginx/aeroshop:ro
+      # Local PEMs only (never in build context / env). Paths match https.conf + start-nginx.sh.
+      - ./deploy/secrets/ntopiran.fullchain.pem:/etc/letsencrypt/live/ntopiran.ir/fullchain.pem:ro
+      - ./deploy/secrets/ntopiran.privkey.pem:/etc/letsencrypt/live/ntopiran.ir/privkey.pem:ro
+      # HTTP-01 ACME webroot (host directory; renewals optional later).
+      - /var/lib/aeroshop/acme:/var/www/acme:ro
+    # Exclusive empty conf.d for AeroShop allowlisted site configs only.
+    # Stock image conf.d contents / include behavior: NOT VERIFIED without image inspect.
+    tmpfs:
+      - /etc/nginx/conf.d:mode=0755,uid=0,gid=0
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 10s
+      retries: 3
+    depends_on:
+      web:
+        condition: service_healthy
+      api:
+        condition: service_healthy
+    networks:
+      - edge
+    logging: *default-logging
+
+networks:
+  # nginx, web and api. Not internal, so api keeps outbound access for future integrations.
+  edge:
+  # postgres, migrate and api only; no route to the internet.
+  backend:
+    internal: true
 
 volumes:
   pgdata:

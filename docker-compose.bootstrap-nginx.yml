@@ -1,0 +1,38 @@
+# Standalone Nginx Bootstrap for ACME HTTP-01 only.
+# Do not merge with docker-compose.prod.yml (port lists can accumulate).
+# Later (authorized): docker compose -f docker-compose.bootstrap-nginx.yml up -d
+#
+# Stop this project before starting production so port 80 is free.
+
+name: aeroshop-bootstrap
+
+services:
+  nginx:
+    image: docker.arvancloud.ir/library/nginx:1.28-alpine@sha256:a8b39bd9cf0f83869a2162827a0caf6137ddf759d50a171451b335cecc87d236
+    restart: unless-stopped
+    environment:
+      NGINX_MODE: bootstrap
+    entrypoint: ["/bin/sh", "/etc/nginx/aeroshop/start-nginx.sh"]
+    ports:
+      - "80:80"
+    volumes:
+      - ./deploy/nginx:/etc/nginx/aeroshop:ro
+      # Host ACME webroot (writer must write on the host; this mount is read-only).
+      - /var/lib/aeroshop/acme:/var/www/acme:ro
+    # Exclusive empty conf.d for AeroShop allowlisted site configs only.
+    # Whether the stock image includes conf.d remains NOT VERIFIED without image inspect.
+    tmpfs:
+      - /etc/nginx/conf.d:mode=0755,uid=0,gid=0
+    # Uses the same wget-based probe as production compose. Binary presence in the
+    # pinned image is NOT VERIFIED until an authorized image/runtime check.
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8080/nginx-health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 5s
+      retries: 3
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
