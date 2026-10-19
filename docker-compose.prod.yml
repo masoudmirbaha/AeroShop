@@ -40,6 +40,7 @@ services:
     logging: *default-logging
 
   migrate:
+    image: aeroshop-migrate:0.8.0
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -56,6 +57,7 @@ services:
     logging: *default-logging
 
   api:
+    image: aeroshop-api:0.8.0
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -91,6 +93,7 @@ services:
     logging: *default-logging
 
   web:
+    image: aeroshop-web:0.8.0
     build:
       context: .
       dockerfile: apps/web/Dockerfile
