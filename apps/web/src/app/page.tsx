@@ -1,29 +1,33 @@
-import { Activity, ArrowLeft, Atom, Boxes, Download, Flame, FolderKanban, Gauge, Orbit, Quote, Spline, Target, Thermometer, Wind } from "lucide-react";
+import { ArrowLeft, Download, FolderKanban, Quote, Target } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import { FaqList } from "@/components/faq-list";
+import { EngineeringServices } from "@/components/home/engineering-services";
+import { FeaturedProducts } from "@/components/home/featured-products";
 import { FlipCards } from "@/components/home/flip-cards";
 import { HeroCarousel } from "@/components/home/hero-carousel";
 import { HomeHero } from "@/components/home/hero";
+import { LatestPosts } from "@/components/home/latest-posts";
+import { SimulationTopics } from "@/components/home/simulation-topics";
+import { ApiErrorNotice, DemoNotice } from "@/components/demo-notice";
 import { Card, IconTile, Section } from "@/components/page";
 import { ProductGrid } from "@/components/product-grid";
-import { serviceIcon } from "@/components/service-icon";
-import { LatestPosts } from "@/components/home/latest-posts";
-import { api, type ProductList } from "@/lib/api";
+import type { ProductList } from "@/lib/api";
+import { demoCategoryList, featuredDemoCourses } from "@/lib/catalog-demo";
+import { demoCatalogEnabled } from "@/lib/demo-mode";
 import { latestPosts, type PageItem } from "@/lib/posts";
+import { tryApi } from "@/lib/try-api";
 
 type Category = { id: string; name: string; slug: string; description: string | null };
 type Topic = { id: string; name: string; slug: string; description: string | null };
-type Service = { id: string; title: string; slug: string; summary: string };
 type Testimonial = { id: string; authorName: string; authorTitle: string | null; body: string };
 type Faq = { id: string; question: string; answer: string };
+
 const reasons = [
   { icon: Target, title: "آموزش مسئله‌محور", text: "مثال‌ها روی مسئله مهندسی بسته شده‌اند، نه فقط معرفی منو." },
   { icon: Download, title: "دسترسی امن به فایل‌ها", text: "بعد از خرید، فایل از حساب شما و با مجوز دانلود باز می‌شود." },
   { icon: FolderKanban, title: "پیگیری شفاف پروژه", text: "درخواست پروژه و مشاوره وضعیت مشخص دارد و در حساب پیگیری می‌شود." },
 ];
-
-const topicIcons = [Wind, Thermometer, Flame, Boxes, Atom, Gauge, Orbit, Activity, Spline];
 
 function MoreLink({ href, children }: { href: string; children: string }) {
   return (
@@ -43,20 +47,37 @@ function Band({ children, tinted, lead }: { children: ReactNode; tinted?: boolea
 }
 
 export default async function Home() {
-  const [products, courseList, categories, topics, services, testimonials, faq, pages] = await Promise.all([
-    api<ProductList>("/products?pageSize=12"),
-    api<ProductList>("/products?type=COURSE&pageSize=3"),
-    api<Category[]>("/categories"),
-    api<Topic[]>("/topics"),
-    api<Service[]>("/services"),
-    api<Testimonial[]>("/testimonials"),
-    api<Faq[]>("/faq"),
-    api<PageItem[]>("/pages"),
+  const [productsLoad, courseLoad, categoriesLoad, topicsLoad, testimonialsLoad, faqLoad, pagesLoad] = await Promise.all([
+    tryApi<ProductList>("/products?pageSize=12"),
+    tryApi<ProductList>("/products?type=COURSE&pageSize=3"),
+    tryApi<Category[]>("/categories"),
+    tryApi<Topic[]>("/topics"),
+    tryApi<Testimonial[]>("/testimonials"),
+    tryApi<Faq[]>("/faq"),
+    tryApi<PageItem[]>("/pages"),
   ]);
-  const catalog = products.items.filter((item) => item.type !== "COURSE");
-  const featured = [...catalog.filter((item) => item.isFeatured), ...catalog.filter((item) => !item.isFeatured)].slice(0, 3);
-  const courses = courseList.items;
-  const posts = latestPosts(pages, 3);
+
+  const products = productsLoad.status === "ok" ? productsLoad.data : null;
+  const catalog = products ? products.items.filter((item) => item.type !== "COURSE") : [];
+  const featured = [...catalog.filter((item) => item.isFeatured), ...catalog.filter((item) => !item.isFeatured)].slice(0, 6);
+
+  const demoEnabled = demoCatalogEnabled();
+  const apiCourses = courseLoad.status === "ok" ? courseLoad.data.items : null;
+  const courses = apiCourses?.length ? apiCourses : demoEnabled ? featuredDemoCourses(3) : [];
+  const coursesUsingDemo = Boolean(demoEnabled && courses.length && !apiCourses?.length);
+  const coursesApiFailed = courseLoad.status === "error" && coursesUsingDemo;
+  const coursesEmptyOk = courseLoad.status === "ok" && !apiCourses?.length && coursesUsingDemo;
+
+  const apiCategories = categoriesLoad.status === "ok" ? categoriesLoad.data : null;
+  const categories = apiCategories?.length ? apiCategories : demoEnabled ? demoCategoryList : [];
+  const categoriesUsingDemo = Boolean(demoEnabled && categories.length && !apiCategories?.length);
+  const categoriesApiFailed = categoriesLoad.status === "error" && categoriesUsingDemo;
+  const categoriesEmptyOk = categoriesLoad.status === "ok" && !apiCategories?.length && categoriesUsingDemo;
+
+  const topics = topicsLoad.status === "ok" ? topicsLoad.data : [];
+  const testimonials = testimonialsLoad.status === "ok" ? testimonialsLoad.data : [];
+  const faq = faqLoad.status === "ok" ? faqLoad.data : [];
+  const posts = pagesLoad.status === "ok" ? latestPosts(pagesLoad.data, 6) : [];
 
   return (
     <main className="flex-1">
@@ -64,7 +85,7 @@ export default async function Home() {
       <HomeHero />
 
       <Band lead>
-        <Section title="خدمات اصلی AeroShop" description="از یادگیری تا اجرای پروژه؛ مسیر مناسب خود را انتخاب کنید.">
+        <Section title="خدمات اصلی NtoPiran" description="از یادگیری تا اجرای پروژه؛ مسیر مناسب خود را انتخاب کنید.">
           <FlipCards />
         </Section>
       </Band>
@@ -72,7 +93,7 @@ export default async function Home() {
       <Band tinted>
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)]">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">چرا AeroShop</h2>
+            <h2 className="text-2xl font-bold tracking-tight md:text-3xl">چرا NtoPiran</h2>
             <p className="mt-4 max-w-md leading-8 text-muted-foreground">
               تمرکز ما روی شبیه‌سازی جریان و انتقال حرارت است؛ آموزش و خدمات را طوری ساخته‌ایم که از مسئله واقعی شروع شوند و به نتیجه قابل استفاده برسند.
             </p>
@@ -103,6 +124,10 @@ export default async function Home() {
       {courses.length ? (
         <Band>
           <Section title="دوره‌های آموزشی" description="مسیرهای آموزشی کامل با سرفصل و پروژه" action={<MoreLink href="/courses">همه دوره‌ها</MoreLink>}>
+            {coursesApiFailed ? (
+              <ApiErrorNotice message="بارگذاری دوره‌ها از سرور انجام نشد؛ نمونه‌های نمایشی Development نشان داده می‌شوند و خرید واقعی نیستند." />
+            ) : null}
+            {coursesEmptyOk ? <DemoNotice message="هنوز دوره‌ای از API برنگشته؛ نمونه‌های نمایشی برای دمو نشان داده می‌شوند." /> : null}
             <ProductGrid items={courses} className="gap-6" />
           </Section>
         </Band>
@@ -110,51 +135,36 @@ export default async function Home() {
 
       <Band tinted>
         <Section title="خدمات مهندسی" description="از مشاوره تا انجام کامل پروژه" action={<MoreLink href="/services">همه خدمات</MoreLink>}>
-          <div className="grid gap-4 md:grid-cols-2">
-            {services.map((service) => (
-              <Link
-                key={service.id}
-                href={`/services/${service.slug}`}
-                className="surface card-glow group relative flex gap-4 overflow-hidden p-6 outline-none focus-visible:ring-3 focus-visible:ring-ring/50"
-              >
-                <span aria-hidden="true" className="accent-line absolute inset-y-0 start-0 w-0.5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-                <IconTile icon={serviceIcon(service.slug)} className="size-12" />
-                <div className="min-w-0 flex-1">
-                  <h3 className="font-semibold transition-colors group-hover:text-primary">{service.title}</h3>
-                  <p className="mt-1.5 text-sm leading-6 text-muted-foreground">{service.summary}</p>
-                </div>
-                <ArrowLeft aria-hidden="true" className="mt-1 size-4 shrink-0 text-muted-foreground transition-[color,translate] duration-200 group-hover:-translate-x-1 group-hover:text-primary" />
-              </Link>
-            ))}
-          </div>
+          <EngineeringServices />
         </Section>
       </Band>
 
       <Band>
         <Section title="حوزه‌های شبیه‌سازی" description="موضوع‌های مهندسی که آموزش و خدمات حول آن‌ها ساخته شده‌اند">
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
-            {topics.map((topic, index) => {
-              const Icon = topicIcons[index % topicIcons.length];
-              return (
-                <Link
-                  key={topic.id}
-                  href={`/products?topic=${topic.slug}`}
-                  className="surface group flex items-center gap-3 p-4 transition-colors duration-200 outline-none hover:border-primary/25 hover:bg-secondary/40 focus-visible:ring-3 focus-visible:ring-ring/50"
-                >
-                  <Icon className="size-4.5 shrink-0 text-primary/80" aria-hidden="true" />
-                  <span className="min-w-0 truncate text-sm font-medium transition-colors group-hover:text-primary">{topic.name}</span>
-                </Link>
-              );
-            })}
-          </div>
+          {topicsLoad.status === "error" ? (
+            <div className="grid gap-4">
+              <p role="alert" className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+                بارگذاری حوزه‌های شبیه‌سازی انجام نشد.
+              </p>
+              {process.env.NODE_ENV === "development" ? <SimulationTopics topics={[]} /> : null}
+            </div>
+          ) : (
+            <SimulationTopics topics={topics} />
+          )}
           {categories.length ? (
-            <div className="mt-6 flex flex-wrap items-center gap-2">
-              <span className="me-1 text-xs font-medium text-muted-foreground">دسته‌ها:</span>
-              {categories.map((item) => (
-                <Link key={item.id} href={`/categories/${item.slug}`} className="chip">
-                  {item.name}
-                </Link>
-              ))}
+            <div className="mt-6 grid gap-3">
+              {categoriesApiFailed ? (
+                <ApiErrorNotice message="بارگذاری دسته‌ها از سرور انجام نشد؛ برچسب‌های نمایشی نشان داده می‌شوند." />
+              ) : null}
+              {categoriesEmptyOk ? <DemoNotice message="دسته‌ای از API برنگشته؛ برچسب‌های نمایشی برای دمو نشان داده می‌شوند." /> : null}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="me-1 text-xs font-medium text-muted-foreground">دسته‌ها:</span>
+                {categories.map((item) => (
+                  <Link key={item.id} href={`/categories/${item.slug}`} className="chip">
+                    {item.name}
+                  </Link>
+                ))}
+              </div>
             </div>
           ) : null}
         </Section>
@@ -162,12 +172,12 @@ export default async function Home() {
 
       <Band tinted>
         <Section title="محصولات ویژه" description="منتخبی از آموزش‌ها و بسته‌های پرطرفدار" action={<MoreLink href="/products">همه محصولات</MoreLink>}>
-          <ProductGrid items={featured} className="gap-6" />
+          <FeaturedProducts products={productsLoad.status === "ok" ? featured : null} error={productsLoad.status === "error" ? productsLoad.message : undefined} />
         </Section>
       </Band>
 
       <Band>
-        <LatestPosts posts={posts} />
+        <LatestPosts posts={posts} error={pagesLoad.status === "error" ? pagesLoad.message : undefined} />
       </Band>
 
       <div className="below-fold mx-auto grid w-full max-w-6xl gap-16 px-4 pb-16 md:gap-20 md:pb-20">

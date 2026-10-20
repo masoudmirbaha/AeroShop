@@ -41,7 +41,7 @@ export function AdminNav() {
           </span>
           <div>
             <p className="text-sm font-semibold text-white">پنل مدیریت</p>
-            <p className="text-[11px] text-navy-foreground/65">AeroShop Admin</p>
+            <p className="text-[11px] text-navy-foreground/65">NtoPiran Admin</p>
           </div>
         </div>
       </div>

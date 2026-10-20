@@ -18,6 +18,8 @@ type Slide = {
   description: string;
   cta: string;
   href: string;
+  secondaryCta?: string;
+  secondaryHref?: string;
   art: ReactNode;
 };
 
@@ -29,16 +31,19 @@ const SNAP_MS = 500;
 const slides: Slide[] = [
   {
     id: "engineering",
-    headline: "از ایده مهندسی تا شبیه‌سازی دقیق",
-    description: "ابزارها و منابع تخصصی برای پیشبرد پروژه‌های مهندسی شما.",
+    headline: "راهکارهای شبیه‌سازی و مهندسی برای تصمیم‌گیری بهتر",
+    description:
+      "محصولات آموزشی و خدمات تخصصی مهندسی در حوزه شبیه‌سازی عددی، تحلیل جریان، انتقال حرارت و تحلیل سازه.",
     cta: "مشاهده محصولات",
     href: "/products",
+    secondaryCta: "خدمات مهندسی",
+    secondaryHref: "/services",
     art: <ArtFlow />,
   },
   {
     id: "courses",
     headline: "دانش مهندسی را به مهارت تبدیل کن",
-    description: "منابع آموزشی تخصصی را پیدا کن و مسیر یادگیری‌ات را هدفمند ادامه بده.",
+    description: "آموزش‌های پروژه‌محور CFD و مسیرهای یادگیری هدفمند برای مهندسان و دانشجویان.",
     cta: "مشاهده دوره‌ها",
     href: "/courses",
     art: <ArtLearning />,
@@ -46,8 +51,8 @@ const slides: Slide[] = [
   {
     id: "services",
     headline: "برای پروژه مهندسی‌ات راهکار پیدا کن",
-    description: "خدمات و راهکارهای مهندسی AeroShop را بررسی کن.",
-    cta: "مشاهده خدمات",
+    description: "از مشاوره تا انجام پروژه شبیه‌سازی؛ مسیر خدمات NtoPiran را بررسی کنید.",
+    cta: "خدمات مهندسی",
     href: "/services",
     art: <ArtServices />,
   },
@@ -361,7 +366,7 @@ export function HeroCarousel() {
       }}
     >
       <h2 id={labelId} className="sr-only">
-        پیشنهادهای ویژه AeroShop
+        پیشنهادهای ویژه NtoPiran
       </h2>
       <p ref={liveRef} className="sr-only" aria-live="polite" />
 
@@ -481,12 +486,12 @@ function SlidePanel({
       aria-label={interactive ? indexLabel : undefined}
     >
       <div className={`relative z-10 select-none ${interactive ? "" : "pointer-events-none"}`}>
-        <p className="text-xs font-medium tracking-wide text-brand-cyan">AeroShop</p>
+        <p className="text-xs font-medium tracking-wide text-brand-cyan">NtoPiran</p>
         <h3 className="mt-2 max-w-xl text-[1.45rem] leading-[1.45] font-bold text-white sm:mt-3 sm:text-3xl md:text-[2.15rem] md:leading-[1.35]">
           {slide.headline}
         </h3>
         <p className="mt-3 max-w-lg text-sm leading-7 text-navy-foreground/78 md:mt-4 md:text-base md:leading-8">{slide.description}</p>
-        <div className="mt-6 md:mt-8">
+        <div className="mt-6 flex flex-wrap gap-3 md:mt-8">
           <Link
             href={slide.href}
             tabIndex={interactive ? 0 : -1}
@@ -498,6 +503,18 @@ function SlidePanel({
             {slide.cta}
             <ArrowLeft aria-hidden="true" className="pointer-events-none" />
           </Link>
+          {slide.secondaryCta && slide.secondaryHref ? (
+            <Link
+              href={slide.secondaryHref}
+              tabIndex={interactive ? 0 : -1}
+              draggable={false}
+              onClick={onCtaClick}
+              onDragStart={(event) => event.preventDefault()}
+              className="btn btn-lg select-none border border-white/35 bg-transparent text-white hover:bg-white/10"
+            >
+              {slide.secondaryCta}
+            </Link>
+          ) : null}
         </div>
       </div>
 

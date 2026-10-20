@@ -1,9 +1,12 @@
 import { ArrowLeft } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { ApiErrorNotice, DemoNotice } from "@/components/demo-notice";
 import { IconTile, Page } from "@/components/page";
 import { serviceIcon } from "@/components/service-icon";
-import { api } from "@/lib/api";
+import { demoServices } from "@/lib/catalog-demo";
+import { demoCatalogEnabled } from "@/lib/demo-mode";
+import { tryApi } from "@/lib/try-api";
 
 type Service = { id: string; title: string; slug: string; summary: string };
 
@@ -13,7 +16,29 @@ export const metadata: Metadata = {
 };
 
 export default async function ServicesPage() {
-  const services = await api<Service[]>("/services");
+  const load = await tryApi<Service[]>("/services");
+  const demoEnabled = demoCatalogEnabled();
+
+  let services: Service[] = [];
+  let usingDemo = false;
+  let apiFailed = false;
+
+  if (load.status === "ok") {
+    services = load.data;
+    if (!services.length && demoEnabled) {
+      services = demoServices;
+      usingDemo = true;
+    }
+  } else {
+    apiFailed = true;
+    if (demoEnabled) {
+      services = demoServices;
+      usingDemo = true;
+    } else {
+      throw new Error(load.message);
+    }
+  }
+
   return (
     <Page
       title="خدمات شبیه‌سازی و مشاوره"
@@ -25,6 +50,8 @@ export default async function ServicesPage() {
         </Link>
       }
     >
+      {apiFailed ? <ApiErrorNotice message="بارگذاری فهرست خدمات از سرور انجام نشد." /> : null}
+      {usingDemo ? <DemoNotice message="فهرست خدمات نمایشی برای دمو — ثبت درخواست واقعی پس از ورود به حساب و اتصال سرور ممکن است." /> : null}
       <div className="grid gap-5 md:grid-cols-2">
         {services.map((service) => (
           <article key={service.id} className="surface surface-hover group relative flex gap-4 p-6">

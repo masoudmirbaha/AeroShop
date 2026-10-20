@@ -27,7 +27,7 @@ export default function ContactPage() {
   return (
     <Page
       title="تماس با ما"
-      description="پرسش، پیشنهاد یا درخواست همکاری را بفرستید؛ پیام شما مستقیم به تیم AeroShop می‌رسد."
+      description="پرسش، پیشنهاد یا درخواست همکاری را بفرستید؛ پیام شما مستقیم به تیم NtoPiran می‌رسد."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "تماس" }]}
     >
       <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">

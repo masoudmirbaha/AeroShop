@@ -146,7 +146,7 @@ export function SiteFooter() {
 
       <div className="relative border-t border-white/10 bg-black/15">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-2 px-4 py-5 text-xs text-navy-foreground/55">
-          <p>© {year} AeroShop — تمامی حقوق محفوظ است. محصولات دیجیتال هستند و ارسال پستی ندارند.</p>
+          <p>© {year} NtoPiran — تمامی حقوق محفوظ است. محصولات دیجیتال هستند و ارسال پستی ندارند.</p>
           <p dir="ltr">Engineering &amp; Simulation</p>
         </div>
       </div>

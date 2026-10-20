@@ -1,22 +1,28 @@
 import { CheckCircle2 } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { notFound } from "next/navigation";
+import { ApiErrorNotice, DemoNotice } from "@/components/demo-notice";
 import { Card, IconTile, Page } from "@/components/page";
 import { serviceIcon } from "@/components/service-icon";
-import { api } from "@/lib/api";
-
-type Service = { title: string; slug: string; summary: string; description: string };
+import { resolveService } from "@/lib/load-service";
 
 const steps = ["ثبت درخواست با شرح مسئله", "بررسی توسط مهندس و تعیین مسیر", "پیگیری وضعیت از حساب کاربری"];
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const service = await api<Service>(`/services/${(await params).slug}`);
-  return { title: service.title, description: service.summary };
+  const resolved = await resolveService((await params).slug);
+  if (resolved.status !== "ok") return { title: "خدمت" };
+  return { title: resolved.service.title, description: resolved.service.summary };
 }
 
 export default async function ServicePage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const service = await api<Service>(`/services/${slug}`);
+  const resolved = await resolveService(slug);
+  if (resolved.status === "missing") notFound();
+  if (resolved.status === "error") throw new Error(resolved.message);
+
+  const service = resolved.service;
+  const isDemo = resolved.source === "demo";
   const href = slug === "free-consultation" ? "/consultation" : "/request-project";
   return (
     <Page
@@ -24,6 +30,8 @@ export default async function ServicePage({ params }: { params: Promise<{ slug: 
       description={service.summary}
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "خدمات", href: "/services" }, { label: service.title }]}
     >
+      {isDemo && "apiError" in resolved && resolved.apiError ? <ApiErrorNotice message="ارتباط با سرور برقرار نشد؛ شرح نمایشی این خدمت نشان داده می‌شود." /> : null}
+      {isDemo ? <DemoNotice message="متن این خدمت برای دمو آماده شده است." /> : null}
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <Card className="p-6 md:p-8">
           <div className="flex items-center gap-3">

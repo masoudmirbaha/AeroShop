@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
-import { APP_NAME } from "@aeroshop/shared";
+import { APP_DESCRIPTION, APP_NAME, APP_ORIGIN } from "@aeroshop/shared";
 import { DirectionProvider } from "@base-ui/react/direction-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { SiteHeader } from "@/components/site-header";
@@ -14,11 +14,20 @@ const vazirmatn = Vazirmatn({
 });
 
 export const metadata: Metadata = {
+  metadataBase: new URL(APP_ORIGIN),
   title: {
     default: APP_NAME,
     template: `%s | ${APP_NAME}`,
   },
-  description: "محصولات آموزشی دیجیتال و خدمات مهندسی CFD",
+  description: APP_DESCRIPTION,
+  openGraph: {
+    type: "website",
+    locale: "fa_IR",
+    url: APP_ORIGIN,
+    siteName: APP_NAME,
+    title: APP_NAME,
+    description: APP_DESCRIPTION,
+  },
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

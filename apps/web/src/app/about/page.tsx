@@ -1,11 +1,12 @@
 import { Cpu, GraduationCap, Workflow } from "lucide-react";
 import type { Metadata } from "next";
 import Link from "next/link";
+import { APP_NAME, APP_ORIGIN } from "@aeroshop/shared";
 import { Card, IconTile, Page } from "@/components/page";
 
 export const metadata: Metadata = {
   title: "درباره ما",
-  description: "AeroShop برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند.",
+  description: `${APP_NAME} برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند.`,
 };
 
 const pillars = [
@@ -17,12 +18,16 @@ const pillars = [
 export default function AboutPage() {
   return (
     <Page
-      title="درباره AeroShop"
-      description="AeroShop برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند."
+      title={`درباره ${APP_NAME}`}
+      description={`${APP_NAME} برای مهندسانی ساخته شده که شبیه‌سازی جریان را یاد می‌گیرند یا پروژه CFD را برون‌سپاری می‌کنند.`}
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "درباره ما" }]}
     >
       <Card className="p-6 leading-8 text-foreground/85 md:p-8">
-        محصولات دیجیتال هستند: آموزش، بسته و دوره. خدمات جداگانه شامل مشاوره، سفارش پروژه، آموزش خصوصی و پشتیبانی فنی است.
+        محصولات دیجیتال هستند: آموزش، بسته و دوره. خدمات جداگانه شامل مشاوره، سفارش پروژه، آموزش خصوصی و پشتیبانی فنی است. نشانی وب‌سایت:{" "}
+        <a href={APP_ORIGIN} className="text-link" dir="ltr">
+          {APP_ORIGIN.replace(/^https:\/\//, "")}
+        </a>
+        .
       </Card>
       <div className="mt-6 grid gap-5 md:grid-cols-3">
         {pillars.map(({ icon, title, text }) => (

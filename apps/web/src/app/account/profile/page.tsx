@@ -29,7 +29,7 @@ export default function ProfilePage() {
   return (
     <Page
       title="پروفایل"
-      description="اطلاعات حساب شما در AeroShop."
+      description="اطلاعات حساب شما در NtoPiran."
       breadcrumbs={[{ label: "خانه", href: "/" }, { label: "داشبورد", href: "/account" }, { label: "پروفایل" }]}
     >
       <AccountNav />

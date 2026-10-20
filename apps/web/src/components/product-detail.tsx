@@ -1,20 +1,17 @@
 import { BadgeCheck, BookOpen, Clock, Download, FileText, FolderOpen, Gauge, Layers, ListTree, PlayCircle, ShieldCheck, type LucideIcon } from "lucide-react";
 import type { Metadata } from "next";
-import { permanentRedirect } from "next/navigation";
+import { notFound, permanentRedirect } from "next/navigation";
 import { AddToCart } from "@/components/add-to-cart";
+import { ApiErrorNotice, DemoNotice } from "@/components/demo-notice";
 import { Card, Page, Section, type Crumb } from "@/components/page";
 import { PriceTag, ProductCardView, ProductVisual, productHref } from "@/components/product-card";
 import { ProductGrid } from "@/components/product-grid";
-import { api, outlineOf, type ProductCard } from "@/lib/api";
+import { DEMO_CONTENT_NOTICE } from "@/lib/catalog-demo";
+import { outlineOf } from "@/lib/api";
 import { formatMinutes, typeLabel } from "@/lib/format";
+import { resolveProductDetail, type ProductDetailData } from "@/lib/load-product";
 
-type Detail = ProductCard & {
-  description: string;
-  files: { id: string; filename: string }[];
-  sections: { id: string; title: string; lessons: { id: string; title: string; durationMinutes: number | null }[] }[];
-  bundleItems: ProductCard[];
-  related: ProductCard[];
-};
+type Detail = ProductDetailData;
 
 const perks = [
   { icon: Download, text: "دانلود فایل‌ها از بخش دانلودهای حساب" },
@@ -54,12 +51,18 @@ function facts(product: Detail): { icon: LucideIcon; label: string; value: strin
 }
 
 export async function productMetadata(slug: string): Promise<Metadata> {
-  const product = await api<Detail>(`/products/${slug}`);
-  return { title: product.title, description: product.summary };
+  const resolved = await resolveProductDetail(slug);
+  if (resolved.status !== "ok") return { title: "محصول" };
+  return { title: resolved.product.title, description: resolved.product.summary };
 }
 
 export async function ProductDetail({ slug, section }: { slug: string; section: "products" | "courses" }) {
-  const product = await api<Detail>(`/products/${slug}`);
+  const resolved = await resolveProductDetail(slug);
+  if (resolved.status === "missing") notFound();
+  if (resolved.status === "error") throw new Error(resolved.message);
+
+  const product = resolved.product;
+  const isDemo = resolved.source === "demo";
   const isCourse = product.type === "COURSE";
   if (isCourse !== (section === "courses")) permanentRedirect(productHref(product));
   const breadcrumbs: Crumb[] = [
@@ -72,12 +75,19 @@ export async function ProductDetail({ slug, section }: { slug: string; section: 
   const details = facts(product);
   return (
     <Page title={product.title} description={product.summary} breadcrumbs={breadcrumbs}>
+      {isDemo && "apiError" in resolved && resolved.apiError ? (
+        <ApiErrorNotice message="ارتباط با سرور برقرار نشد؛ نسخه نمایشی این صفحه نشان داده می‌شود." />
+      ) : null}
+      {isDemo ? <DemoNotice /> : null}
       <div className="grid items-start gap-8 lg:grid-cols-[minmax(0,1fr)_20rem]">
         <div className="grid min-w-0 gap-8">
           <Card className="p-6 md:p-8">
             <h2 className="text-lg font-bold">درباره این {typeLabel(product.type)}</h2>
             <p className="mt-4 leading-8 whitespace-pre-wrap text-foreground/85">{product.description}</p>
-            {product.files.length ? (
+            {isDemo ? (
+              <p className="mt-6 rounded-lg bg-secondary/60 px-3 py-2 text-sm text-secondary-foreground">{product.contentStatus ?? DEMO_CONTENT_NOTICE}</p>
+            ) : null}
+            {!isDemo && product.files.length ? (
               <p className="mt-6 flex items-center gap-2 rounded-lg bg-secondary/60 px-3 py-2 text-sm text-secondary-foreground">
                 <Download className="size-4 shrink-0" aria-hidden="true" />
                 فایل‌ها بعد از خرید در بخش دانلودها قرار می‌گیرند.
@@ -88,16 +98,16 @@ export async function ProductDetail({ slug, section }: { slug: string; section: 
           {product.sections.length ? (
             <Section title="سرفصل‌ها" description={`${product.sections.length.toLocaleString("fa-IR")} فصل · ${lessonCount.toLocaleString("fa-IR")} درس`}>
               <div className="surface divide-y divide-border/70 overflow-hidden">
-                {product.sections.map((section, index) => (
-                  <div key={section.id} className="p-5">
+                {product.sections.map((courseSection, index) => (
+                  <div key={courseSection.id} className="p-5">
                     <h3 className="flex items-center gap-3 font-semibold">
                       <span className="grid size-7 shrink-0 place-items-center rounded-lg bg-secondary text-xs font-bold text-primary tabular-nums">
                         {(index + 1).toLocaleString("fa-IR")}
                       </span>
-                      {section.title}
+                      {courseSection.title}
                     </h3>
                     <ul className="mt-3 grid gap-1 ps-10">
-                      {section.lessons.map((lesson) => (
+                      {courseSection.lessons.map((lesson) => (
                         <li key={lesson.id} className="flex items-center justify-between gap-3 rounded-md py-1.5 text-sm text-muted-foreground">
                           <span className="flex items-center gap-2">
                             <PlayCircle className="size-4 shrink-0 text-primary/60" aria-hidden="true" />
@@ -135,12 +145,20 @@ export async function ProductDetail({ slug, section }: { slug: string; section: 
             <div className="px-5 pt-4 pb-5">
               <div className="flex flex-wrap gap-1.5">
                 <span className="badge">{isCourse ? "دوره‌ی آموزشی" : typeLabel(product.type)}</span>
+                {isDemo ? <span className="badge badge-muted">نمونه نمایشی</span> : null}
               </div>
               <div className="mt-4">
                 <PriceTag price={product.price} comparePrice={product.comparePrice} size="lg" />
+                {isDemo ? <p className="mt-1 text-xs text-muted-foreground">قیمت آزمایشی برای دمو</p> : null}
               </div>
               <div className="mt-4">
-                <AddToCart productId={product.id} />
+                {isDemo ? (
+                  <p className="rounded-lg border border-border/80 bg-muted/40 px-3 py-3 text-center text-sm leading-6 text-muted-foreground">
+                    خرید و افزودن به سبد برای نمونه‌های نمایشی غیرفعال است.
+                  </p>
+                ) : (
+                  <AddToCart productId={product.id} />
+                )}
               </div>
               {details.length ? (
                 <ul aria-label={isCourse ? "مشخصات دوره" : "مشخصات محصول"} className="mt-5 divide-y divide-border/60 border-t border-border/70 text-sm">
@@ -149,14 +167,16 @@ export async function ProductDetail({ slug, section }: { slug: string; section: 
                   ))}
                 </ul>
               ) : null}
-              <ul className="mt-5 grid gap-2.5 border-t border-border/70 pt-4 text-sm text-muted-foreground">
-                {perks.map(({ icon: Icon, text }) => (
-                  <li key={text} className="flex items-center gap-2.5">
-                    <Icon className="size-4 shrink-0 text-accent-foreground" aria-hidden="true" />
-                    {text}
-                  </li>
-                ))}
-              </ul>
+              {!isDemo ? (
+                <ul className="mt-5 grid gap-2.5 border-t border-border/70 pt-4 text-sm text-muted-foreground">
+                  {perks.map(({ icon: Icon, text }) => (
+                    <li key={text} className="flex items-center gap-2.5">
+                      <Icon className="size-4 shrink-0 text-accent-foreground" aria-hidden="true" />
+                      {text}
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
             </div>
           </div>
         </aside>

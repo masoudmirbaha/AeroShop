@@ -187,7 +187,7 @@ function DesktopNav({ pathname }: { pathname: string }) {
 export function Logo({ tone = "light" }: { tone?: "light" | "dark" }) {
   const dark = tone === "dark";
   return (
-    <Link href="/" aria-label="AeroShop، صفحه اصلی" className={`flex shrink-0 items-center gap-2.5 rounded-lg ${focusRing}`}>
+    <Link href="/" aria-label="NtoPiran، صفحه اصلی" className={`flex shrink-0 items-center gap-2.5 rounded-lg ${focusRing}`}>
       <span className="grid size-9 place-items-center rounded-lg bg-linear-to-br from-navy to-primary shadow-sm">
         <svg viewBox="0 0 32 32" className="size-6" aria-hidden="true">
           <path d="M5 11.5c7-3.2 15-3.2 22 0" fill="none" stroke="var(--brand-cyan)" strokeWidth="1.6" strokeLinecap="round" />
@@ -197,7 +197,7 @@ export function Logo({ tone = "light" }: { tone?: "light" | "dark" }) {
       </span>
       <span dir="ltr" className="flex flex-col leading-none">
         <span className={`text-lg font-bold tracking-tight ${dark ? "text-white" : "text-foreground"}`}>
-          Aero<span className={dark ? "text-brand-cyan" : "text-primary"}>Shop</span>
+          Nto<span className={dark ? "text-brand-cyan" : "text-primary"}>Piran</span>
         </span>
         <span className={`mt-1 hidden text-[10px] font-medium tracking-[0.14em] uppercase sm:block ${dark ? "text-navy-foreground/60" : "text-muted-foreground"}`}>
           Engineering &amp; Simulation

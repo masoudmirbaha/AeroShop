@@ -95,7 +95,7 @@ export function HomeHero() {
       <div className="relative mx-auto w-full max-w-6xl px-4 py-8 md:py-11">
         <div className="mb-6 flex items-end justify-between gap-4 md:mb-8">
           <h2 id="home-stats-heading" className="text-xl font-bold tracking-tight text-foreground md:text-2xl">
-            AeroShop به روایت آمار
+            NtoPiran به روایت آمار
           </h2>
           <div aria-hidden="true" className="mb-1 hidden h-px flex-1 bg-linear-to-l from-transparent via-border to-border/80 sm:block" />
         </div>
