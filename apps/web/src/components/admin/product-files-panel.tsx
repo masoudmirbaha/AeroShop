@@ -27,26 +27,47 @@ function formatCreatedAt(value: string) {
   }).format(date);
 }
 
+const MAX_HINT = "حداکثر ۱۰۰ مگابایت · ZIP، PDF، TXT یا ۷z";
+
 export function ProductFilesPanel({ productId }: { productId: string }) {
   const { data, error, reload } = useAdminData<ProductFileRow[]>(`/admin/products/${productId}/files`);
   const [message, setMessage] = useState("");
   const [uploading, setUploading] = useState(false);
   const [deletingId, setDeletingId] = useState<string | null>(null);
+  const [replaceExisting, setReplaceExisting] = useState(false);
+  const [selectedLabel, setSelectedLabel] = useState("");
   const inputRef = useRef<HTMLInputElement>(null);
+
+  function onPickFile() {
+    const file = inputRef.current?.files?.[0];
+    if (!file) {
+      setSelectedLabel("");
+      return;
+    }
+    setSelectedLabel(`${file.name} · ${formatSize(file.size)}`);
+  }
 
   async function onUpload() {
     const input = inputRef.current;
     const file = input?.files?.[0];
     if (!file || uploading) return;
 
+    const toReplace = replaceExisting && data?.length === 1 ? data[0] : null;
     setUploading(true);
     setMessage("");
     const body = new FormData();
     body.append("file", file);
     try {
       await adminFetch(`/admin/products/${productId}/files`, { method: "POST", body });
+      if (toReplace) {
+        await adminFetch(`/admin/products/${productId}/files/${toReplace.id}`, { method: "DELETE" });
+        setMessage("فایل جایگزین شد و به این محصول متصل ماند.");
+      } else {
+        setMessage("فایل با موفقیت آپلود شد و به این محصول متصل شد.");
+      }
       if (input) input.value = "";
-      setMessage("فایل با موفقیت آپلود شد.");
+      setSelectedLabel("");
+      setReplaceExisting(false);
       reload();
     } catch (reason) {
       setMessage(reason instanceof AdminError ? reason.message : "آپلود انجام نشد.");
@@ -76,23 +97,52 @@ export function ProductFilesPanel({ productId }: { productId: string }) {
 
   return (
     <section className="mt-10 max-w-2xl border-t pt-8">
-      <h2 className="mb-4 text-xl font-bold">فایل‌های قابل دانلود</h2>
+      <h2 className="mb-2 text-xl font-bold">فایل‌های قابل دانلود</h2>
+      <p className="mb-4 text-sm text-muted-foreground">
+        این فایل‌ها عمومی نیستند؛ فقط از مسیر دانلود حساب کاربری پس از خرید/اعطای دسترسی قابل دریافت‌اند. مسیر storageKey در پاسخ API برنمی‌گردد.
+      </p>
       <Notice text={message || error} />
 
-      <div className="mb-5 flex flex-wrap items-end gap-3">
-        <label className="grid min-w-[14rem] flex-1 gap-1 text-sm">
-          انتخاب فایل
-          <input
-            ref={inputRef}
-            type="file"
-            accept=".zip,.pdf,.txt,.7z,application/zip,application/pdf,text/plain,application/x-7z-compressed"
-            disabled={uploading}
-            className={inputClass}
-          />
-        </label>
-        <button type="button" disabled={uploading} aria-busy={uploading} onClick={() => void onUpload()} className={primaryButton}>
-          {uploading ? "در حال آپلود..." : "آپلود فایل"}
-        </button>
+      <div className="mb-5 grid gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <label className="grid min-w-[14rem] flex-1 gap-1 text-sm">
+            انتخاب فایل
+            <input
+              ref={inputRef}
+              type="file"
+              accept=".zip,.pdf,.txt,.7z,application/zip,application/pdf,text/plain,application/x-7z-compressed"
+              disabled={uploading}
+              className={inputClass}
+              onChange={onPickFile}
+            />
+            <span className="text-xs text-muted-foreground">{MAX_HINT}</span>
+            {selectedLabel ? (
+              <span className="text-xs text-foreground" dir="ltr">
+                انتخاب‌شده: {selectedLabel}
+              </span>
+            ) : null}
+          </label>
+          <button
+            type="button"
+            disabled={uploading || !selectedLabel}
+            aria-busy={uploading}
+            onClick={() => void onUpload()}
+            className={primaryButton}
+          >
+            {uploading ? "در حال آپلود..." : "آپلود فایل"}
+          </button>
+        </div>
+        {data?.length === 1 ? (
+          <label className="flex items-center gap-2 text-sm">
+            <input
+              type="checkbox"
+              checked={replaceExisting}
+              disabled={uploading}
+              onChange={(event) => setReplaceExisting(event.target.checked)}
+            />
+            پس از آپلود، فایل فعلی حذف و با فایل جدید جایگزین شود
+          </label>
+        ) : null}
       </div>
 
       {!data?.length ? (

@@ -26,7 +26,8 @@
     "db:migrate": "prisma migrate dev",
     "db:deploy": "prisma migrate deploy",
     "db:studio": "prisma studio",
-    "db:seed": "tsx prisma/seed.ts"
+    "db:seed": "tsx prisma/seed.ts",
+    "db:seed:samples": "tsx prisma/seed-sample-catalog.ts"
   },
   "dependencies": {
     "@aeroshop/shared": "workspace:*",

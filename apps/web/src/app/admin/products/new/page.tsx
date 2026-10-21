@@ -13,6 +13,9 @@ function NewProductForm() {
   return (
     <>
       <h1 className="mb-6 text-3xl font-bold">{isCourse ? "دوره جدید" : "محصول جدید"}</h1>
+      <p className="mb-6 max-w-2xl text-sm text-muted-foreground">
+        پس از ذخیره مشخصات، به صفحه ویرایش منتقل می‌شوید تا تصویر کاور و فایل دانلودی را واقعاً آپلود کنید.
+      </p>
       <ProductForm defaultType={defaultType} cancelHref={isCourse ? "/admin/courses" : "/admin/products"} />
     </>
   );
