@@ -59,11 +59,22 @@ function readableFieldError(name: string, apiText: string) {
   return fieldCopy[name as FieldName] ?? apiText;
 }
 
-export function ProductForm({ id }: { id?: string }) {
+export function ProductForm({
+  id,
+  defaultType,
+  onSaved,
+  cancelHref = "/admin/products",
+}: {
+  id?: string;
+  defaultType?: string;
+  onSaved?: () => void;
+  cancelHref?: string;
+}) {
   const router = useRouter();
   const [message, setMessage] = useState("");
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [formKey, setFormKey] = useState(0);
   const dirty = useRef(false);
   const savingLock = useRef(false);
   const product = useAdminData<Product>(id ? `/admin/products/${id}` : null);
@@ -166,7 +177,12 @@ export function ProductForm({ id }: { id?: string }) {
       const saved = await adminFetch<{ id?: unknown } | null>(id ? `/admin/products/${id}` : "/admin/products", sendJson(id ? "PATCH" : "POST", payload));
       if (id) {
         dirty.current = false;
-        router.push("/admin/products");
+        product.reload();
+        setFormKey((value) => value + 1);
+        onSaved?.();
+        setMessage("تغییرات ذخیره شد.");
+        savingLock.current = false;
+        setSaving(false);
         return;
       }
       const createdId = typeof saved?.id === "string" && PRODUCT_ID.test(saved.id) ? saved.id : null;
@@ -188,7 +204,7 @@ export function ProductForm({ id }: { id?: string }) {
   function leave() {
     if (dirty.current && !window.confirm(LEAVE)) return;
     dirty.current = false;
-    router.push("/admin/products");
+    router.push(cancelHref);
   }
 
   function errorFor(name: string) {
@@ -211,8 +227,10 @@ export function ProductForm({ id }: { id?: string }) {
     };
   }
 
+  const initialType = current?.type ?? defaultType ?? "SINGLE_PRODUCT";
+
   return (
-    <form onSubmit={onSubmit} onInput={markDirty} onChange={markDirty} className="grid max-w-2xl gap-3">
+    <form key={formKey} onSubmit={onSubmit} onInput={markDirty} onChange={markDirty} className="grid max-w-2xl gap-3">
       <Notice text={message} />
       <label className="grid gap-1 text-sm">
         عنوان
@@ -227,7 +245,7 @@ export function ProductForm({ id }: { id?: string }) {
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="grid gap-1 text-sm">
           نوع
-          <select name="type" defaultValue={current?.type ?? "SINGLE_PRODUCT"} className={inputClass}>
+          <select name="type" defaultValue={initialType} className={inputClass}>
             {types.map(([value, label]) => (
               <option key={value} value={value}>
                 {label}

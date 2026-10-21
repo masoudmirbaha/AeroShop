@@ -1,6 +1,6 @@
 "use client";
 
-import { FolderTree, HelpCircle, Inbox, LayoutDashboard, LogOut, Mail, Package, ShieldCheck, ShoppingBag, Users } from "lucide-react";
+import { BookOpen, FolderTree, HelpCircle, Inbox, LayoutDashboard, LogOut, Mail, Package, ShieldCheck, ShoppingBag, Users } from "lucide-react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useState } from "react";
@@ -9,6 +9,7 @@ import { useSession } from "@/components/session-provider";
 const sections = [
   { label: "داشبورد", href: "/admin", icon: LayoutDashboard },
   { label: "محصولات", href: "/admin/products", icon: Package },
+  { label: "دوره‌ها", href: "/admin/courses", icon: BookOpen },
   { label: "دسته‌ها", href: "/admin/categories", icon: FolderTree },
   { label: "سفارش‌ها", href: "/admin/orders", icon: ShoppingBag },
   { label: "کاربران", href: "/admin/users", icon: Users },
